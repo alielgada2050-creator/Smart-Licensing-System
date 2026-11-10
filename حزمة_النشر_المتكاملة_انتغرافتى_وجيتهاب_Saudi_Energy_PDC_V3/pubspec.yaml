@@ -1,0 +1,30 @@
+name: saudi_energy_pdc_smart_licenses
+description: منظومة الإدارة الذكية للرخص — الشركة السعودية للطاقة & PDC (الإصدار V3.0 - 946 رخصة حقيقية + 85 عمل تنسيق + 15 وكيل ذكي)
+publish_to: 'none'
+version: 3.0.0+3
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.1
+  shared_preferences: ^2.2.3
+  url_launcher: ^6.2.6
+  flutter_tts: ^4.0.2
+  speech_to_text: ^6.6.1
+  file_picker: ^8.0.3
+  google_fonts: ^6.2.1
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.2
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/data/enterprise_db_v3.json
+    - assets/data/enterprise_db_expanded.json

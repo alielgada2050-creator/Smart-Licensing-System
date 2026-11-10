@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  smart-permit-api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: always
+
+  smart-permit-web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+    restart: always

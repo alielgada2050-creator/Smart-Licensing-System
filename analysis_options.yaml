@@ -1,0 +1,9 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - حزمة_النشر_المتكاملة_انتغرافتى_وجيتهاب_Saudi_Energy_PDC_V3/**
+
+linter:
+  rules:
+    avoid_print: false
