@@ -2610,7 +2610,7 @@ h1#hdrTitle.luminous-main-title {
             👁️ أنت تتصفح المنصة حالياً في «وضع الزائر» — يقتصر العرض على المنصات والرخص التي تعمل (السارية) أو التي تحت التنفيذ فقط.
           </div>
           <div style="font-size:11.5px;color:#78350F;margin-top:3px;">
-            للاطلاع على باقي أقسام المنصة أو التعديل أو استخراج كافة الشيتات، يتوجب <strong>تسجيل الدخول وموافقة المشرف علي الجدع</strong> عبر الإيميل المرفق في الدعم الفني (<code>alielgada5@gmail.com</code>) أو عبر الواتساب (<code>0597778853</code>).
+            لا تتوفر صلاحيات التعديل أو الدخول لباقي الأقسام حتى إعداد Google OAuth والتحقق الخادمي.
           </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -2645,9 +2645,6 @@ h1#hdrTitle.luminous-main-title {
             <button type="button" class="btn btn-sm" onclick="stopEgyptianMaleVoice()">
               ⏹️ إيقاف الصوت
             </button>
-            <button type="button" class="btn btn-sm" id="btnStudioApiConfigToggle" onclick="toggleStudioApiConfigBox()" title="إعداد وحفظ مفاتيح Google Studio API — متاح للمشرف فقط">
-              🔑 مفاتيح Google Studio API
-            </button>
             <button type="button" class="btn btn-sm" onclick="switchView('support')">
               📞 الدعم الفني (مشرف علي الجدع: 0597778853)
             </button>
@@ -2669,38 +2666,6 @@ h1#hdrTitle.luminous-main-title {
           <button type="button" class="btn btn-sm" onclick="generateOnDemandCustomSheet('LAB_AND_EXPIRED')">
             🔬 إصدار شيت المختبر والمنتهية
           </button>
-        </div>
-
-        <!-- صندوق إعداد مفاتيح Google AI Studio API (يفتح عند الضغط على 🔑 مفاتيح Google Studio API) -->
-        <div id="studioApiConfigBox" style="display:none;margin-top:10px;padding:12px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
-            <strong style="font-size:12px;color:#242424;">🔑 إعداد مفاتيح Google AI Studio API (خاص بالمشرف: علي الجدع — لحفظ مفتاح GEMINI_API_KEY وتسريع البحث والتقارير)</strong>
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size:11px;color:#0F6CBD;font-weight:700;text-decoration:none;">🔗 فتح Google AI Studio API Keys ↗</a>
-          </div>
-          <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:8px;align-items:end;">
-            <div>
-              <label style="font-size:11px;font-weight:700;color:#424242;">مفتاح Google AI Studio الرئيسي (GEMINI_API_KEY):</label>
-              <input type="password" id="googleStudioApiKeyInput" class="input-ctrl mono" value="AIzaSy_SAUDI_ENERGY_PDC_STUDIO_FAST_KEY_2026" placeholder="AIzaSy...">
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:700;color:#424242;">نموذج البحث والمقارنة السريع:</label>
-              <select id="googleStudioFastModelSelect" class="select-ctrl">
-                <option value="gemini-3.8-flash">gemini-3.8-flash (سرعة فائقة للبحث والشيتات)</option>
-                <option value="gemini-4-argon">gemini-4-argon (تحليل عميق ومقارنات هندسية)</option>
-                <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (أداء لحظي عالي الكثافة)</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:700;color:#424242;">نموذج الصوت واللهجة (TTS / Live):</label>
-              <select id="googleStudioVoiceAccentSelect" class="select-ctrl">
-                <option value="ar-EG-male">لهجة مصرية — صوت رجل (ar-EG Male)</option>
-                <option value="ar-SA-male">لهجة سعودية — صوت رجل (ar-SA Male)</option>
-              </select>
-            </div>
-            <div>
-              <button type="button" class="btn btn-sm btn-primary" onclick="saveGoogleStudioApiSettings()">💾 حفظ وتفعيل المفاتيح</button>
-            </div>
-          </div>
         </div>
 
         <!-- صندوق مخرجات البحث والمقارنة الفورية والرد الصوتي المصري -->
@@ -5764,9 +5729,7 @@ function renderDailyReport() {
 }
 
 function triggerDailySyncNow() {
-  renderAllModules();
-  renderDailyReport();
-  showToast("تم تشغيل وظيفة المزامنة اليومية (Daily License Intelligence) بنجاح وتحديث كافة المؤشرات بتوقيت الرياض.");
+  showToast("المزامنة اليومية غير مفعّلة: لم يتم إعداد مصادقة Google أو ربط Drive/Sheets بالخادم.");
 }
 
 // ============================================================================
@@ -6064,17 +6027,15 @@ function loadStateFromDatabase() {
 }
 
 function logAndSendGmailAfterUpload(email, subjectAction, bodyDetails) {
-  // Records the Gmail confirmation message in the database and notifies the user
-  const msgId = "GMAIL-MSG-" + Math.floor(100000 + Math.random() * 900000);
-  showToast(`📧 تم إرسال رسالة تأكيد فورية إلى بريد الجيميل (${email}) رقم [${msgId}]: | • العملية: ${subjectAction} | • التفاصيل: ${bodyDetails} | • تم الحفظ في قاعدة البيانات (Database) بنجاح.`);
+  showToast("لم يُرسل البريد أو يُحفظ في قاعدة بيانات خادمية؛ يلزم إعداد خدمة البريد والمصادقة أولاً.");
 }
 
 function exportDatabaseBackupJson() {
   const fullDb = {
     database_engine: "Saudi Energy & PDC & Al-Asas Al-Areedh Enterprise DB V3.2",
     general_supervisor: "مشرف علي الجدع",
-    gmail_verified_user: authenticatedGmailUser.email || "alielgada5@gmail.com",
-    last_four_hour_sync: new Date().toISOString(),
+    gmail_verified_user: (authenticatedGmailUser && authenticatedGmailUser.email) || "غير مسجل",
+    last_four_hour_sync: "غير متصل",
     tables: {
       permits_945: PERMITS_DB,
       weekly_coordination_85: COORD_ITEMS,
@@ -6359,7 +6320,7 @@ function submitSiteEngineerCoordinationRequest() {
     renderPreExecEarlyWarnings();
     renderSiteEngineerRequestsTable();
     saveStateToDatabase(`طلب تنسيق مهندس الموقع (${mode})`, `طلب ${reqId}: ${newBase} (${newTx}) — ${reason}`);
-    showToast(`✅ تم تنفيذ طلب مهندس الموقع (${reqId}) وتحديث جدول التنسيق الأسبوعي والشيت وإرسال إشعار الجيميل إلى (مشرف علي الجدع)!`);
+    showToast(`تم تسجيل الطلب محلياً فقط (${reqId})؛ لم يُرسل بريد ولم تتم مزامنة Google Sheets.`);
   });
 }
 
@@ -6751,36 +6712,16 @@ function renderPreExecEarlyWarnings() {
 
 
 function sendMissingPermitGmailAlert(txNo, baseNo, district, supervisor, office, startWin) {
-  const targetEmail = (authenticatedGmailUser && authenticatedGmailUser.email) ? authenticatedGmailUser.email : "alielgada5@gmail.com";
-  const subject = `تنبيه عاجل: لابد من إصدار رخصة للمعاملة (${txNo}) - أساس (${baseNo}) - ${district}`;
-  const body = `السلام عليكم ورحمة الله وبركاته،
-
-تحية طيبة للمشرف العام: مشرف علي الجدع وفريق (${office})،
-
-تنبيه آلي من منظومة الرخص الذكية (السعودية للطاقة & PDC & الأساس العريض):
-المعاملة رقم (${txNo}) المرتبطة برقم الأساس (${baseNo}) في حي (${district}) والمجدولة بتاريخ (${startWin || 'هذا الأسبوع'}) لا يوجد لها رخصة مضافة على Google Drive حتى الآن.
-
-⚠️ الإجراء الإلزامي: لابد من إصدار رخصة إليها فوراً ورفعها على الدرايف قبل توجه الفرقة الميدانية للموقع.
-• المشرف القائم بالمعاملة: ${supervisor}
-
-مع تحيات منظومة الإدارة الذكية للرخص.`;
-
-  saveStateToDatabase("إرسال تنبيه Gmail لمعاملة بدون رخصة", `معاملة ${txNo} | أساس ${baseNo} | ${district} -> ${targetEmail}`);
-  showToast(`📧 تم إرسال إشعار عاجل على الجيميل (${targetEmail}) للمشرف العام (مشرف علي الجدع): | • 🚨 تنبيه: المعاملة (${txNo} | ${baseNo} - ${district}) لا توجد لها رخصة على الدرايف ولابد من إصدار رخصة إليها قبل موعد العمل (${startWin || 'الأسبوع الحالي'})!`);
+  showToast("لم يُرسل بريد إلكتروني؛ خدمة البريد غير مهيّأة على الخادم.");
 }
 
 function sendBatchMissingPermitsGmailAlert() {
   const missingList = COORD_ITEMS.filter(c => !c.matched_permit_id || c.matched_permit_id === "بدون رخصة مصدرة");
-  const targetEmail = (authenticatedGmailUser && authenticatedGmailUser.email) ? authenticatedGmailUser.email : "alielgada5@gmail.com";
-  saveStateToDatabase("إرسال إشعار Gmail جماعي للمعاملات بدون رخصة", `${missingList.length} معاملة تحتاج إصدار رخصة -> ${targetEmail}`);
-  showToast(`📧 تم إرسال بيان شامل إلى بريد الجيميل (${targetEmail} — مشرف علي الجدع) يضم جميع المعاملات التي لا يوجد لها رخصة على الدرايف وعددها (${missingList.length} معاملة) مع تنبيه: (لابد من إصدار رخصة إليها قبل نزول الفرق الميدانية).`);
+  showToast(`لم يُرسل بريد إلكتروني. توجد ${missingList.length} معاملة بلا رخصة؛ يلزم إعداد خدمة بريد موثوقة قبل الإرسال.`);
 }
 
 function triggerPreExecPermitAlert(baseNo, txNo, sup, startWin) {
-  showToast(`🚨 تم إرسال إنذار استباقي عاجل (قبل 24–48 ساعة من موعد العمل ${startWin}):
-• الموقع/الأساس: ${baseNo} (معاملة ${txNo})
-• المسؤول: ${sup}
-• التعليمات: استخراج/تجديد الرخصة وإرفاقها قبل تحرك الفرقة الميدانية للموقع.`);
+  showToast("لم يُرسل تنبيه بريد/رسالة؛ إعداد قناة التنبيهات غير مكتمل.");
 }
 
 // ============================================================================
@@ -6789,30 +6730,12 @@ function triggerPreExecPermitAlert(baseNo, txNo, sup, startWin) {
 let fourHourRemainingSec = 4 * 3600 - 5;
 
 function startFourHourAiSyncEngine() {
-  setInterval(() => {
-    fourHourRemainingSec -= 1;
-    if (fourHourRemainingSec <= 0) {
-      fourHourRemainingSec = 4 * 3600;
-      runFourHourAiSync(true);
-    }
-    const hrs = String(Math.floor(fourHourRemainingSec / 3600)).padStart(2, "0");
-    const mins = String(Math.floor((fourHourRemainingSec % 3600) / 60)).padStart(2, "0");
-    const secs = String(fourHourRemainingSec % 60).padStart(2, "0");
-    const el = document.getElementById("fourHourCountdown");
-    if (el) el.textContent = `${hrs}:${mins}:${secs}`;
-  }, 1000);
+  const el = document.getElementById("fourHourCountdown");
+  if (el) el.textContent = "غير مفعّل";
 }
 
-function runFourHourAiSync(isAutoCycle) {
-  fourHourRemainingSec = 4 * 3600;
-  renderAllModules();
-  renderPreExecEarlyWarnings();
-  const modeLabel = isAutoCycle ? "تلقائياً (دورة الـ 4 ساعات المجدولة)" : "فوراً عبر وكلاء الذكاء الاصطناعي الـ 14";
-  showToast(`🤖 تم تحديث المنصة ${modeLabel} من مجلدات Google Drive الأربعة:
-• فحص شيت الرخص المنتهية والمعادة وتحديث الحالات
-• فحص مجلد (ملفات الرخص PDF) وربط أي رخصة جديدة
-• فحص (التقرير الوارد من المختبر URS) وجدول التنسيق الأسبوعي (85 معاملة)
-• المزامنة القادمة تلقائياً بعد 4 ساعات.`);
+function runFourHourAiSync() {
+  showToast("لم تُنفّذ المزامنة: ربط Google Drive/Sheets والمصادقة الخادمية غير مهيّأين.");
 }
 
 // ============================================================================
@@ -6820,8 +6743,8 @@ function runFourHourAiSync(isAutoCycle) {
 //    - Browse & Download: 100% Free without login
 //    - Edit / Approve / Add License: Requires Verified Gmail Login
 // ============================================================================
-let isGmailAuthenticated = true;
-let authenticatedGmailUser = { email: "alielgada5@gmail.com", name: "مشرف علي الجدع (مهندس الموقع والمشرف العام)" };
+let isGmailAuthenticated = false;
+let authenticatedGmailUser = null;
 let pendingGmailActionCallback = null;
 
 function requireGmailAuth(actionFn, revertFn) {
@@ -6846,49 +6769,12 @@ function closeGmailAuthModal() {
 }
 
 function sendGmailVerificationCode() {
-  const email = (document.getElementById("gmailEmailInput").value || "").trim();
-  if (!email.toLowerCase().endsWith("@gmail.com")) {
-    showToast("⚠️ يرجى إدخال بريد Gmail صحيح ينتهي بـ @gmail.com لإرسال رمز التأكيد.");
-    return;
-  }
-  const box = document.getElementById("gmailOtpBox");
-  const hint = document.getElementById("gmailOtpHint");
-  if (box) box.style.display = "block";
-  if (hint) hint.textContent = `تم إرسال رمز التأكيد المكون من 6 أرقام إلى (${email}) — رمز التحقق الفوري: 849206`;
-  showToast(`📨 تم إرسال رمز التأكيد (849206) إلى بريد Gmail: ${email}`);
+  showToast("تسجيل الدخول غير مفعّل بعد. يلزم إعداد Google OAuth والتحقق من الجلسة على الخادم؛ لم يُرسل رمز.");
 }
 
 function verifyGmailOtpAndLogin() {
-  const email = (document.getElementById("gmailEmailInput").value || "alielgada5@gmail.com").trim();
-  const name = (document.getElementById("gmailNameInput").value || "مشرف علي الجدع").trim();
-  const otp = (document.getElementById("gmailOtpInput").value || "").trim();
-  if (!otp) {
-    showToast("⚠️ يرجى إدخال رمز التأكيد المرسل إلى Gmail.");
-    return;
-  }
-  isGmailAuthenticated = true;
-  authenticatedGmailUser = { email, name };
-  closeGmailAuthModal();
-
-  const badge = document.getElementById("gmailAuthBadge");
-  if (badge) {
-    badge.style.borderColor = "#00FF86";
-    badge.innerHTML = `<span style="color:#00FF86;">✅ مؤكد عبر Gmail: <strong>${name}</strong> (${email}) — صلاحية التعديل والإضافة مفعلة</span>`;
-  }
-  const btn = document.getElementById("gmailLoginBtn");
-  if (btn) {
-    btn.textContent = `🔓 متصل: ${name}`;
-    btn.onclick = function() {
-      showToast(`أنت مسجل الدخول ومؤكد حالياً بحساب Gmail: ${email} (${name})`);
-    };
-  }
-
-  showToast(`✅ تم تسجيل الدخول والتأكيد عبر Gmail بنجاح (${name} - ${email}). جميع صلاحيات التعديل والإضافة مفعلة الآن!`);
-  if (typeof pendingGmailActionCallback === "function") {
-    const fn = pendingGmailActionCallback;
-    pendingGmailActionCallback = null;
-    fn();
-  }
+  pendingGmailActionCallback = null;
+  showToast("لم يتم منح صلاحية: Google OAuth غير مهيّأ. لا يُقبل رمز محلي أو إدخال بريد كإثبات هوية.");
 }
 
 function openAddPermitModal() {
@@ -6899,6 +6785,10 @@ function openAddPermitModal() {
 }
 
 function submitNewPermitRecord() {
+  if (!isGmailAuthenticated || !authenticatedGmailUser) {
+    showToast("لم تتم الإضافة: يلزم تسجيل دخول موثوق من الخادم أولاً.");
+    return;
+  }
   const pid = (document.getElementById("newPermitId").value || "").trim() || String(2403500 + PERMITS_DB.length);
   const baseNo = (document.getElementById("newPermitBase").value || "").trim() || "R6985";
   const schemeNo = (document.getElementById("newPermitScheme").value || "").trim() || "261225001";
@@ -7614,7 +7504,7 @@ gemini-api agent run --agent antigravity-preview-09-2026 --env remote \
 
 // 1. VISITOR MODE VS APPROVED ACCESS GATE (منظومة الدخول ووضع الزائر)
 // ============================================================================
-let isVisitorMode = false;
+let isVisitorMode = true;
 // Views allowed in Visitor Mode (المنصات التي تعمل أو تحت التنفيذ + الدعم الفني فقط)
 const VISITOR_ALLOWED_VIEWS = ["dashboard", "licenses", "coordination", "support"];
 
@@ -7624,17 +7514,6 @@ function openAccessGateModal() {
 }
 
 function applyAccessModeUI() {
-  // إخفاء أو إظهار زر إعداد مفاتيح Google Studio API بحيث يظهر للمشرف فقط
-  const studioKeyBtn = document.getElementById("btnStudioApiConfigToggle");
-  const studioBox = document.getElementById("studioApiConfigBox");
-  const isSupervisor = isUserAuthorizedSupervisor();
-  if (studioKeyBtn) {
-    studioKeyBtn.style.display = isSupervisor ? "inline-flex" : "none";
-  }
-  if (studioBox && !isSupervisor) {
-    studioBox.style.display = "none";
-  }
-
   const banner = document.getElementById("visitorModeActiveBanner");
   const statusTxt = document.getElementById("accessModeStatusText");
   const visBtn = document.getElementById("visitorModeToggleBtn");
@@ -7704,12 +7583,9 @@ switchView = function(vKey) {
 // Also ensure verifyAndLoginGmail unlocks full platform
 const _origVerifyLogin = verifyGmailOtpAndLogin;
 verifyGmailOtpAndLogin = function() {
-  isVisitorMode = false;
-  if (typeof _origVerifyLogin === "function") {
-    _origVerifyLogin();
-  }
+  _origVerifyLogin();
+  isVisitorMode = true;
   applyAccessModeUI();
-  showToast("✅ تم تفعيل الدخول المعتمد بموافقة المشرف علي الجدع وفتح جميع أقسام المنصة الـ 15!");
 };
 
 // ============================================================================
@@ -7789,46 +7665,8 @@ function speakSupportContactEgyptian() {
 }
 
 // ============================================================================
-// 3. GOOGLE AI STUDIO API FAST SEARCH, COMPARISON & ON-DEMAND SHEET GENERATOR
+// 3. LOCAL RULE-BASED SEARCH & ON-DEMAND SHEET GENERATOR
 // ============================================================================
-function isUserAuthorizedSupervisor() {
-  if (isVisitorMode) return false;
-  if (!isGmailAuthenticated) return false;
-  const email = (authenticatedGmailUser && authenticatedGmailUser.email ? authenticatedGmailUser.email : "").toLowerCase();
-  const name = (authenticatedGmailUser && authenticatedGmailUser.name ? authenticatedGmailUser.name : "");
-  // Authorized supervisor: المشرف علي الجدع or supervisor email alielgada5@gmail.com
-  return email === "alielgada5@gmail.com" || name.includes("الجدع") || name.includes("مشرف");
-}
-
-function toggleStudioApiConfigBox() {
-  // إتاحة وإظهار ربط وإعداد مفاتيح Google AI Studio API للمشرف فقط
-  if (!isUserAuthorizedSupervisor()) {
-    openAccessGateModal();
-    showToast("🔒 خاصية ربط وإعداد مفاتيح Google AI Studio API متاحة للمشرف فقط (المشرف علي الجدع). يرجى تسجيل الدخول أو طلب الموافقة عبر الواتساب (0597778853).");
-    return;
-  }
-  const b = document.getElementById("studioApiConfigBox");
-  if (!b) return;
-  b.style.display = b.style.display === "none" ? "block" : "none";
-  if (b.style.display === "block") {
-    showToast("🔑 تم فتح إعدادات مفاتيح Google AI Studio API المخصصة للمشرف.");
-  }
-}
-
-function saveGoogleStudioApiSettings() {
-  const key = (document.getElementById("googleStudioApiKeyInput").value || "").trim();
-  const model = document.getElementById("googleStudioFastModelSelect").value;
-  try {
-    localStorage.setItem("SAUDI_ENERGY_GOOGLE_STUDIO_API_KEY", key);
-    localStorage.setItem("SAUDI_ENERGY_GOOGLE_STUDIO_MODEL", model);
-  } catch (e) {}
-  const badge = document.getElementById("studioApiStatusBadge");
-  if (badge) {
-    badge.textContent = `Google AI Studio (${model}): مفعل وسريع ✓`;
-  }
-  showToast(`🔑 تم حفظ وتفعيل مفتاح Google AI Studio API على النموذج (${model}) لسرعة البحث والمقارنة وإصدار الشيتات!`);
-}
-
 function runEgyptianAiFastSearchAndSheet() {
   const q = (document.getElementById("egyptianAiFastQueryInput").value || "").trim();
   const outBox = document.getElementById("egyptianAiFastResultBox");
@@ -7861,7 +7699,7 @@ function runEgyptianAiFastSearchAndSheet() {
   const closedCnt = PERMITS_DB.filter(r => r.category === "مغلقة (تم الإغلاق)").length;
   const elapsedMs = Math.max(12, Math.round(performance.now() - t0));
 
-  const egReply = `تمام يا باشمهندس، بحثتلك في قاعدة البيانات في ${elapsedMs} مللي ثانية باستخدام محرك جوجل ستوديو. لقيت ${matchedPermits.length} سجل مطابق. وبخصوص المقارنة السريعة: عندنا ${activeCnt} رخصة شغالة وتحت التنفيذ، مقابل ${ripcCnt} معاد من المركز و ${consCnt} معاد من الاستشاري، و ${expCnt} منتهية تحت المعالجة، و ${closedCnt} رخصة اتقفلت نهائي. تقدر تدوس على زرار تنزيل الشيت عشان يتحمل معاك فوراً.`;
+  const egReply = `تمام يا باشمهندس، بحثتلك محلياً في قاعدة البيانات في ${elapsedMs} مللي ثانية باستخدام قواعد واضحة. لقيت ${matchedPermits.length} سجل مطابق. وبخصوص المقارنة السريعة: عندنا ${activeCnt} رخصة شغالة وتحت التنفيذ، مقابل ${ripcCnt} معاد من المركز و ${consCnt} معاد من الاستشاري، و ${expCnt} منتهية تحت المعالجة، و ${closedCnt} رخصة اتقفلت نهائي. تقدر تدوس على زرار تنزيل الشيت عشان يتحمل معاك فوراً.`;
 
   speakInEgyptianMaleAccent(egReply);
 
@@ -7869,7 +7707,7 @@ function runEgyptianAiFastSearchAndSheet() {
     outBox.style.display = "block";
     outBox.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-        <strong style="color:#0F6CBD;">⚡ نتيجة البحث والمقارنة الفائقة (Google AI Studio — زمن الاستجابة: ${elapsedMs}ms)</strong>
+        <strong style="color:#0F6CBD;">⚡ نتيجة البحث المحلي القائم على القواعد — زمن الاستجابة: ${elapsedMs}ms</strong>
         <div style="display:flex;gap:6px;">
           <button type="button" class="btn btn-sm btn-primary" onclick="downloadCustomFilteredCsv('${q.replace(/'/g, "")}')">📥 تنزيل شيت النتائج (Excel / CSV) الآن</button>
           <button type="button" class="btn btn-sm" onclick="window.print()">🖨️ إصدار تقرير PDF</button>
@@ -8004,14 +7842,14 @@ window.addEventListener("DOMContentLoaded", function() { initApp(); if (typeof a
   <div class="card" style="max-width:580px;width:100%;margin:0;border:1px solid #D1D1D1;background:#FFFFFF;">
     <div class="card-header">
       <div class="card-title" style="color:#242424;display:flex;align-items:center;gap:8px;">
-        <span>🔐 منظومة الدخول إلى المنصة والصلاحيات (وضع الزائر / موافقة المشرف علي الجدع)</span>
+        <span>🔐 الدخول (وضع الزائر / Google OAuth غير مهيّأ)</span>
       </div>
       <button class="btn btn-sm" onclick="closeGmailAuthModal()">✕ إغلاق</button>
     </div>
 
     <div style="font-size:12px;color:#424242;margin-bottom:12px;line-height:1.65;background:#F8FAFC;padding:10px 12px;border-radius:6px;border:1px solid #E5E7EB;">
       • <strong>👁️ وضع الزائر (متاح بدون تسجيل دخول):</strong> يتيح رؤية <strong>المنصات والرخص التي تعمل (السارية) أو التي تحت التنفيذ فقط</strong> وتنزيل رخصها.<br>
-      • <strong>🔓 الدخول الكامل لباقي أقسام المنصة والتعديل وإصدار الشيتات:</strong> يتوجب <strong>تسجيل الدخول وموافقة المشرف علي الجدع</strong> من خلال الإيميل المرفق في الدعم الفني (<code>alielgada5@gmail.com</code>) أو التواصل عبر الواتساب (<code>0597778853</code>).
+      • <strong>🔓 الدخول الكامل:</strong> تسجيل الدخول غير مفعّل حتى إعداد Google OAuth والتحقق الخادمي. لا تمنح هذه الصفحة صلاحية اعتماد أو تعديل.
     </div>
 
     <!-- أزرار اختيار سريع لوضع التصفح -->
@@ -8021,24 +7859,24 @@ window.addEventListener("DOMContentLoaded", function() { initApp(); if (typeof a
         <span style="font-size:10.5px;color:#78350F;">رؤية المنصات والرخص التي تعمل أو تحت التنفيذ فقط</span>
       </button>
       <button type="button" class="btn" style="padding:10px;text-align:right;display:flex;flex-direction:column;gap:3px;border:1px solid #0F6CBD;background:#EFF6FF;" onclick="verifyGmailOtpAndLogin()">
-        <strong style="color:#0F6CBD;font-size:12.5px;">🔓 دخول معتمد (بموافقة مشرف علي الجدع)</strong>
-        <span style="font-size:10.5px;color:#1E3A8A;">فتح كافة أقسام المنصة والتعديل وإصدار جميع الشيتات</span>
+        <strong style="color:#0F6CBD;font-size:12.5px;">🔒 دخول Google غير مفعّل</strong>
+        <span style="font-size:10.5px;color:#1E3A8A;">يلزم إعداد OAuth والتحقق الخادمي قبل منح الصلاحيات</span>
       </button>
     </div>
 
     <div style="display:flex;flex-direction:column;gap:10px;">
       <div>
         <label style="font-size:11.5px;font-weight:700;color:#242424;">البريد الإلكتروني (Gmail) لطالب الدخول:</label>
-        <input type="email" id="gmailEmailInput" class="input-ctrl mono" placeholder="example@gmail.com" value="alielgada5@gmail.com" style="margin-top:4px;">
+        <input type="email" id="gmailEmailInput" class="input-ctrl mono" placeholder="example@gmail.com" style="margin-top:4px;">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div>
           <label style="font-size:11.5px;font-weight:700;color:#242424;">اسم المهندس / المشرف:</label>
-          <input type="text" id="gmailNameInput" class="input-ctrl" value="مشرف علي الجدع" style="margin-top:4px;">
+          <input type="text" id="gmailNameInput" class="input-ctrl" style="margin-top:4px;">
         </div>
         <div>
-          <label style="font-size:11.5px;font-weight:700;color:#242424;">كود موافقة المشرف علي الجدع:</label>
-          <div id="gmailOtpBox" style="margin-top:4px;"><span id="gmailOtpHint" style="display:none;"></span><input type="text" id="gmailOtpInput" class="input-ctrl mono" value="849206" placeholder="كود موافقة مشرف علي الجدع"></div>
+          <label style="font-size:11.5px;font-weight:700;color:#242424;">رمز الدخول غير مستخدم حالياً:</label>
+          <div id="gmailOtpBox" style="margin-top:4px;"><span id="gmailOtpHint" style="display:none;"></span><input type="text" id="gmailOtpInput" class="input-ctrl mono" placeholder="تسجيل الدخول غير مفعّل"></div>
         </div>
       </div>
 
@@ -8062,7 +7900,7 @@ window.addEventListener("DOMContentLoaded", function() { initApp(); if (typeof a
 
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
         <button class="btn btn-sm" onclick="activateVisitorModeOnly()">👁️ المتابعة كزائر (العاملة وتحت التنفيذ فقط)</button>
-        <button class="btn btn-sm btn-primary" onclick="verifyGmailOtpAndLogin()">✅ تأكيد الدخول والموافقة المعتمدة</button>
+        <button class="btn btn-sm btn-primary" onclick="verifyGmailOtpAndLogin()">🔒 Google OAuth غير مهيّأ</button>
       </div>
     </div>
   </div>

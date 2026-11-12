@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.1
   shared_preferences: ^2.2.3
   url_launcher: ^6.2.6
   flutter_tts: ^4.0.2

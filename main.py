@@ -4,7 +4,7 @@
 يخدم قاعدة البيانات الحقيقية الكاملة:
 - 946 رخصة بلدية وهندسية (موزعة على 11 فئة)
 - 85 عمل تنسيق أسبوعي ميداني (P0 - P3)
-- 73 فحص مختبر URS + قاعدة SLA الـ 60 يوماً من تاريخ انتهاء الرخصة
+- 73 فحص مختبر URS + مهل يحددها المشرف من الإعدادات
 - 64 رخصة PDF مستخرجة عبر OCR
 - 41 مهمة أودو ERP + 12 سجل فحص SEC QA/QC
 - 15 وكيلاً ذكياً + مزامنة كل 4 ساعات + إشراف عام: مشرف علي الجدع (0597778853 | alielgada5@gmail.com)
@@ -14,17 +14,191 @@ from __future__ import annotations
 
 import json
 import os
+import base64
+import hashlib
+import hmac
+import secrets
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from urllib.parse import parse_qs, quote, urlparse
+from urllib.parse import parse_qs, quote, urlencode, urlparse
+from urllib.request import Request as UrlRequest, urlopen
+from urllib.error import HTTPError, URLError
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from server.domain import calculate_due_date, classify_deadline
 
 APP_DIR = Path(__file__).resolve().parent
 EXPANDED_DB_PATH = APP_DIR / "assets" / "data" / "enterprise_db_expanded.json"
 INDEX_HTML_PATH = APP_DIR / "index.html"
+from dotenv import load_dotenv
+
+load_dotenv(APP_DIR / ".env")
+OAUTH_STATE_COOKIE = "permit_oauth_state"
+SESSION_COOKIE = "permit_session"
+OAUTH_STATE_TTL_SECONDS = 600
+DEFAULT_SESSION_TTL_SECONDS = 8 * 60 * 60
+
+
+class OAuthConfigurationError(RuntimeError):
+    pass
+
+
+def _b64url_encode(value: bytes) -> str:
+    return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")
+
+
+def _b64url_decode(value: str) -> bytes:
+    return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
+
+
+def _session_signing_key() -> bytes:
+    key = os.environ.get("SESSION_SIGNING_KEY", "")
+    if len(key) < 32:
+        raise OAuthConfigurationError(
+            "SESSION_SIGNING_KEY must contain at least 32 characters."
+        )
+    return key.encode("utf-8")
+
+
+def _oauth_config() -> Dict[str, str]:
+    config = {
+        "client_id": os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "").strip(),
+        "client_secret": os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "").strip(),
+        "redirect_uri": os.environ.get("GOOGLE_OAUTH_REDIRECT_URI", "").strip(),
+        "master_email": os.environ.get("GOOGLE_MASTER_ADMIN_EMAIL", "").strip().lower(),
+    }
+    if not all(config.values()):
+        raise OAuthConfigurationError(
+            "Google OAuth credentials, redirect URI, and master email must be configured."
+        )
+    parsed_redirect = urlparse(config["redirect_uri"])
+    if parsed_redirect.scheme != "https" and parsed_redirect.hostname not in (
+        "localhost",
+        "127.0.0.1",
+    ):
+        raise OAuthConfigurationError(
+            "Google OAuth redirect URI must use HTTPS except on localhost."
+        )
+    cookie_options = _cookie_options(0)
+    if parsed_redirect.hostname not in ("localhost", "127.0.0.1") and not cookie_options[
+        "secure"
+    ]:
+        raise OAuthConfigurationError(
+            "AUTH_COOKIE_SECURE must be true when Google OAuth uses a public host."
+        )
+    _session_signing_key()
+    return config
+
+
+def _sign_payload(payload: Dict[str, Any]) -> str:
+    encoded = _b64url_encode(
+        json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    )
+    signature = hmac.new(
+        _session_signing_key(), encoded.encode("ascii"), hashlib.sha256
+    ).digest()
+    return f"{encoded}.{_b64url_encode(signature)}"
+
+
+def _verify_signed_payload(token: str) -> Optional[Dict[str, Any]]:
+    try:
+        encoded, supplied_signature = token.split(".", 1)
+        expected_signature = hmac.new(
+            _session_signing_key(), encoded.encode("ascii"), hashlib.sha256
+        ).digest()
+        if not hmac.compare_digest(
+            expected_signature, _b64url_decode(supplied_signature)
+        ):
+            return None
+        payload = json.loads(_b64url_decode(encoded))
+        if not isinstance(payload, dict) or int(payload.get("exp", 0)) <= int(time.time()):
+            return None
+        return payload
+    except (ValueError, TypeError, json.JSONDecodeError, OAuthConfigurationError):
+        return None
+
+
+def _session_ttl_seconds() -> int:
+    raw_ttl = os.environ.get(
+        "AUTH_SESSION_TTL_SECONDS", str(DEFAULT_SESSION_TTL_SECONDS)
+    )
+    try:
+        ttl = int(raw_ttl)
+    except ValueError as error:
+        raise OAuthConfigurationError("AUTH_SESSION_TTL_SECONDS must be an integer.") from error
+    if not 300 <= ttl <= 24 * 60 * 60:
+        raise OAuthConfigurationError(
+            "AUTH_SESSION_TTL_SECONDS must be between 300 and 86400."
+        )
+    return ttl
+
+
+def _cookie_options(max_age: int) -> Dict[str, Any]:
+    secure = os.environ.get("AUTH_COOKIE_SECURE", "true").strip().lower()
+    if secure not in ("true", "false"):
+        raise OAuthConfigurationError("AUTH_COOKIE_SECURE must be true or false.")
+    return {
+        "httponly": True,
+        "secure": secure == "true",
+        "samesite": "lax",
+        "path": "/",
+        "max_age": max_age,
+    }
+
+
+def _user_from_session(token: Optional[str]) -> Optional[Dict[str, str]]:
+    if not token:
+        return None
+    payload = _verify_signed_payload(token)
+    if not payload:
+        return None
+    email = str(payload.get("email", "")).strip().lower()
+    subject = str(payload.get("sub", "")).strip()
+    name = str(payload.get("name", "")).strip()
+    if not email or not subject:
+        return None
+    master_email = os.environ.get("GOOGLE_MASTER_ADMIN_EMAIL", "").strip().lower()
+    return {
+        "email": email,
+        "name": name or email,
+        "role": "super_admin" if master_email and email == master_email else "viewer",
+    }
+
+
+def _google_post_form(url: str, values: Dict[str, str]) -> Dict[str, Any]:
+    request = UrlRequest(
+        url,
+        data=urlencode(values).encode("utf-8"),
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as error:
+        raise OAuthConfigurationError("Google OAuth request failed.") from error
+    if not isinstance(payload, dict):
+        raise OAuthConfigurationError("Google OAuth returned an invalid response.")
+    return payload
+
+
+def _google_userinfo(access_token: str) -> Dict[str, Any]:
+    request = UrlRequest(
+        "https://openidconnect.googleapis.com/v1/userinfo",
+        headers={"Authorization": f"Bearer {access_token}"},
+        method="GET",
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as error:
+        raise OAuthConfigurationError("Google identity verification failed.") from error
+    if not isinstance(payload, dict):
+        raise OAuthConfigurationError("Google returned an invalid identity response.")
+    return payload
 
 # ============================================================================
 # تحميل قاعدة البيانات الحقيقية الكاملة عند بدء التشغيل
@@ -39,7 +213,6 @@ _DB: Dict[str, Any] = {
 }
 _SITE_ENGINEER_LOGS: List[Dict[str, Any]] = []
 _SUPPORT_TICKETS: List[Dict[str, Any]] = []
-_LAST_4H_SYNC: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def load_enterprise_database() -> None:
@@ -58,50 +231,113 @@ def load_enterprise_database() -> None:
 load_enterprise_database()
 
 
-def compute_urs_60_day_sla(permit: Dict[str, Any]) -> Dict[str, Any]:
-    """حساب مهلة الـ 60 يوماً لرفع شهادة المختبر URS (تاريخ انتهاء الرخصة + 60 يوماً)."""
+def compute_urs_deadline(
+    permit: Dict[str, Any],
+    settings: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Calculate a URS deadline only when its administrator-managed settings exist."""
     cat = str(permit.get("category", "") or "")
     if cat == "مغلقة (تم الإغلاق)":
         return {
             "status": "COMPLETED",
-            "badge_ar": "مغلقة نهائياً (آمن)",
-            "days_remaining": 60,
+            "badge_ar": "مغلقة نهائياً",
+            "days_remaining": None,
         }
-    end_str = (
-        str(permit.get("end_date", "") or "")
-        or str(permit.get("ref_date_for_60", "") or "")
-        or "2026-10-15"
-    ).strip()[:10]
-    try:
-        dt = datetime.fromisoformat(end_str)
-        deadline = dt + timedelta(days=60)
-        rem = (deadline - datetime(2026, 11, 8)).days
-        if rem < 0:
-            return {
-                "status": "OVERDUE",
-                "badge_ar": f"تجاوز 60 يوم ({abs(rem)}-)",
-                "days_remaining": rem,
-                "deadline": deadline.strftime("%Y-%m-%d"),
-            }
-        if rem <= 15:
-            return {
-                "status": "WARNING",
-                "badge_ar": f"حرج ≤15 يوم ({rem})",
-                "days_remaining": rem,
-                "deadline": deadline.strftime("%Y-%m-%d"),
-            }
+    source_settings = settings or {}
+    grace_days = source_settings.get("urs_report_grace_days")
+    near_days = source_settings.get("near_deadline_days")
+    end_str = str(permit.get("end_date", "") or "").strip()[:10]
+    counting_mode = source_settings.get("day_counting_mode")
+    business_timezone = source_settings.get("business_timezone")
+    if (
+        not end_str
+        or grace_days is None
+        or near_days is None
+        or counting_mode is None
+        or business_timezone is None
+    ):
         return {
-            "status": "SAFE",
-            "badge_ar": f"{rem} يوم متبقي",
+            "status": "UNCONFIGURED",
+            "badge_ar": "إعدادات المهلة أو تاريخ الانتهاء غير متاح",
+            "days_remaining": None,
+        }
+    if (
+        not isinstance(grace_days, int)
+        or isinstance(grace_days, bool)
+        or not isinstance(near_days, int)
+        or isinstance(near_days, bool)
+        or not isinstance(counting_mode, str)
+        or not isinstance(business_timezone, str)
+        or min(grace_days, near_days) < 0
+    ):
+        raise ValueError("Deadline settings must be non-negative integers")
+    holiday_values = source_settings.get("official_holidays", [])
+    weekend_values = source_settings.get("weekend_days")
+    if not isinstance(holiday_values, list):
+        raise ValueError("official_holidays setting must be a list")
+    if any(not isinstance(value, str) for value in holiday_values):
+        raise ValueError("official_holidays entries must be ISO dates")
+    if isinstance(weekend_values, list) and any(
+        not isinstance(value, int) or isinstance(value, bool) for value in weekend_values
+    ):
+        raise ValueError("weekend_days entries must be weekday numbers")
+    try:
+        holidays = frozenset(date.fromisoformat(value) for value in holiday_values)
+    except ValueError as error:
+        raise ValueError("official_holidays setting must contain valid ISO dates") from error
+    try:
+        weekends = (
+            frozenset(weekend_values)
+            if isinstance(weekend_values, list)
+            else None
+        )
+        start_date = date.fromisoformat(end_str)
+    except ValueError:
+        return {
+            "status": "INVALID_DATE",
+            "badge_ar": "تاريخ انتهاء الرخصة غير صالح",
+            "days_remaining": None,
+        }
+    deadline = calculate_due_date(
+        start_date,
+        grace_days,
+        counting_mode=counting_mode,
+        weekend_days=weekends,
+        official_holidays=holidays,
+    )
+    try:
+        business_today = datetime.now(ZoneInfo(business_timezone)).date()
+    except ZoneInfoNotFoundError as error:
+        raise ValueError("business_timezone setting is invalid") from error
+    deadline_status = classify_deadline(
+        deadline,
+        business_today,
+        near_days,
+        counting_mode=counting_mode,
+        weekend_days=weekends,
+        official_holidays=holidays,
+    )
+    rem = deadline_status.days_remaining
+    if rem < 0:
+        return {
+            "status": "OVERDUE",
+            "badge_ar": f"متأخر {abs(rem)} يوم",
             "days_remaining": rem,
             "deadline": deadline.strftime("%Y-%m-%d"),
         }
-    except ValueError:
+    if rem <= near_days:
         return {
-            "status": "PENDING",
-            "badge_ar": "بانتظار فحص 60 يوم",
-            "days_remaining": 30,
+            "status": "NEAR",
+            "badge_ar": f"قريب من الاستحقاق: {rem} يوم",
+            "days_remaining": rem,
+            "deadline": deadline.strftime("%Y-%m-%d"),
         }
+    return {
+        "status": "NORMAL",
+        "badge_ar": f"{rem} يوم متبقي",
+        "days_remaining": rem,
+        "deadline": deadline.strftime("%Y-%m-%d"),
+    }
 
 
 # ============================================================================
@@ -199,8 +435,8 @@ def read_root() -> Dict[str, Any]:
         },
         "external_integrations": {
             "odoo_url": "https://alasas.odoo.com/web#cids=1&action=menu",
-            "sync_interval_hours": 4,
-            "last_sync": _LAST_4H_SYNC,
+            "sync_enabled": False,
+            "last_sync": None,
         },
         "web_ui_url": "/app",
     }
@@ -209,12 +445,12 @@ def read_root() -> Dict[str, Any]:
 def get_executive_stats() -> Dict[str, Any]:
     permits = _DB["permits"]
     categories_breakdown: Dict[str, int] = {}
-    sla_counts = {"COMPLETED": 0, "OVERDUE": 0, "WARNING": 0, "SAFE": 0, "PENDING": 0}
+    sla_counts = {"COMPLETED": 0, "OVERDUE": 0, "NEAR": 0, "NORMAL": 0, "UNCONFIGURED": 0}
 
     for p in permits:
         ck = str(p.get("category", "UNKNOWN"))
         categories_breakdown[ck] = categories_breakdown.get(ck, 0) + 1
-        sla = compute_urs_60_day_sla(p)
+        sla = compute_urs_deadline(p)
         st = sla["status"]
         sla_counts[st] = sla_counts.get(st, 0) + 1
 
@@ -239,7 +475,7 @@ def get_executive_stats() -> Dict[str, Any]:
         "odoo_tasks_total": len(_DB["odoo"]),
         "sec_qaqc_total": len(_DB["sec"]),
         "site_engineer_logs_count": len(_SITE_ENGINEER_LOGS),
-        "last_4h_sync": _LAST_4H_SYNC,
+        "last_4h_sync": None,
     }
 
 
@@ -291,7 +527,7 @@ def get_permit_13_tabs_profile(permit_id: str) -> Optional[Dict[str, Any]]:
         pid = str(p.get("permit_id", ""))
         base_no = str(p.get("base_no", ""))
         if pid == q or base_no == q or q in pid:
-            sla = compute_urs_60_day_sla(p)
+            sla = compute_urs_deadline(p)
             related_urs = [u for u in _DB["urs"] if q in str(u.get("permit_id", ""))]
             related_coord = [
                 c
@@ -358,23 +594,9 @@ def list_odoo_tasks() -> Dict[str, Any]:
 
 
 def trigger_4hour_sync() -> Dict[str, Any]:
-    global _LAST_4H_SYNC
-    _LAST_4H_SYNC = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return {
-        "status": "SYNC_COMPLETED",
-        "timestamp": _LAST_4H_SYNC,
-        "agent": "AG-15 (وكيل التحديث التلقائي كل 4 ساعات)",
-        "synced_entities": {
-            "permits": len(_DB["permits"]),
-            "coordination": len(_DB["coordination"]),
-            "urs": len(_DB["urs"]),
-            "pdfs": len(_DB["pdfs"]),
-            "odoo": len(_DB["odoo"]),
-        },
-        "message_ar": (
-            f"تم بنجاح تشغيل دورة المزامنة التلقائية (4 ساعات) في {_LAST_4H_SYNC} "
-            "وفحص شيتات Google Drive وصور الرخص ومهام أودو تحت إشراف مشرف علي الجدع."
-        ),
+        "status": "AUTH_PROVIDER_NOT_CONFIGURED",
+        "message_ar": "المزامنة معطلة حتى إعداد المصادقة ومصدر البيانات الفعلي.",
     }
 
 
@@ -397,7 +619,7 @@ def query_egyptian_ai_agent(req: AgentQueryRequest) -> Dict[str, Any]:
             break
 
     if matched_permit:
-        sla = compute_urs_60_day_sla(matched_permit)
+        sla = compute_urs_deadline(matched_permit)
         reply = (
             f"يا باشمهندس، فحصت لك الرخصة رقم {matched_permit.get('permit_id')} (الأساس {matched_permit.get('base_no')}) فوراً: "
             f"الحي ({matched_permit.get('district')})، الفئة ({matched_permit.get('category')})، "
@@ -423,62 +645,19 @@ def query_egyptian_ai_agent(req: AgentQueryRequest) -> Dict[str, Any]:
 
 
 def register_or_login(req: UserAuthRequest) -> Dict[str, Any]:
-    valid_codes = {"849206", "ALI-JADA-APPROVED", "SEC-PDC-2030", "0597778853"}
-    if req.approval_code and req.approval_code.strip() in valid_codes:
-        return {
-            "status": "APPROVED",
-            "visitor_mode": False,
-            "role": req.requested_role if req.requested_role != "VISITOR" else "APPROVED_SUPERVISOR",
-            "approved_by": "مشرف علي الجدع (alielgada5@gmail.com | 0597778853)",
-            "message": "تم التحقق من كود اعتماد المشرف علي الجدع بنجاح. جميع الشاشات الـ 16 مفتوحة بالكامل.",
-        }
     return {
-        "status": "VISITOR_RESTRICTED",
+        "status": "AUTH_PROVIDER_NOT_CONFIGURED",
         "visitor_mode": True,
         "message": (
-            "تم تسجيلك في وضع الزائر (قراءة محدودة). "
-            "لفتح كافة الصلاحيات يرجى التواصل مع المشرف علي الجدع (0597778853 | alielgada5@gmail.com)."
+            "لم يتم إعداد مزود مصادقة؛ لم تُمنح أي صلاحية من بيانات الطلب أو رمز اعتماد."
         ),
-        "supervisor_contact": {
-            "name": "مشرف علي الجدع",
-            "phone": "0597778853",
-            "whatsapp": "https://wa.me/966597778853",
-            "telegram": "https://t.me/+966597778853",
-            "email": "alielgada5@gmail.com",
-        },
     }
 
 
 def submit_site_engineer_action(req: SiteEngineerActionRequest) -> Dict[str, Any]:
-    updated_permit = None
-    for p in _DB["permits"]:
-        if str(p.get("permit_id", "")) == req.permit_no.strip():
-            p["category"] = req.new_status
-            p["field_status"] = req.new_status
-            if req.urs_status:
-                p["urs_result"] = req.urs_status
-            if req.notes:
-                p["notes"] = req.notes
-            updated_permit = p
-            break
-
-    log_entry = {
-        "tx_id": f"TX-{int(time.time())}",
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "engineer_name": req.engineer_name,
-        "permit_no": req.permit_no,
-        "action_type": req.action_type,
-        "new_status": req.new_status,
-        "urs_status": req.urs_status or "غير محدد",
-        "notes": req.notes,
-        "gps": {"lat": req.lat, "lng": req.lng},
-        "permit_matched": updated_permit is not None,
-    }
-    _SITE_ENGINEER_LOGS.insert(0, log_entry)
     return {
-        "status": "SUCCESS",
-        "transaction": log_entry,
-        "message": f"تم حفظ التحديث الميداني للرخصة {req.permit_no} وإشعار المشرف علي الجدع.",
+        "status": "AUTH_PROVIDER_NOT_CONFIGURED",
+        "message": "لم يُحفظ التعديل؛ المصادقة ونطاق الصلاحية وسجل التدقيق غير مفعّلة.",
     }
 
 
@@ -517,9 +696,9 @@ def create_support_ticket(req: SupportTicketRequest) -> Dict[str, Any]:
 # ربط FastAPI إن كانت المكتبة مثبتة
 # ============================================================================
 try:
-    from fastapi import FastAPI, HTTPException, Query
+    from fastapi import FastAPI, HTTPException, Query, Request, Response
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import FileResponse, HTMLResponse
+    from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
     app = FastAPI(
         title="Saudi Energy & PDC Smart Licenses Platform API V3.0",
@@ -531,26 +710,189 @@ try:
         version="3.0.0",
     )
 
+    allowed_origins = [
+        origin.strip()
+        for origin in os.environ.get(
+            "CORS_ALLOWED_ORIGINS", "http://localhost:8000"
+        ).split(",")
+        if origin.strip()
+    ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type"],
     )
 
     app.get("/")(read_root)
-    app.get("/api/stats")(get_executive_stats)
-    app.get("/api/permits")(list_permits)
-    app.get("/api/coordination")(list_coordination_works)
-    app.get("/api/urs")(list_urs_inspections)
-    app.get("/api/ocr")(list_pdf_ocr_licenses)
-    app.get("/api/odoo")(list_odoo_tasks)
-    app.post("/api/sync/4h")(trigger_4hour_sync)
-    app.post("/api/agents/query")(query_egyptian_ai_agent)
-    app.post("/api/auth/register-or-login")(register_or_login)
-    app.post("/api/site-engineer/action")(submit_site_engineer_action)
     app.post("/api/support/ticket")(create_support_ticket)
+
+    @app.get("/api/auth/google/start")
+    def google_oauth_start() -> Any:
+        try:
+            config = _oauth_config()
+            state = secrets.token_urlsafe(32)
+            verifier = _b64url_encode(secrets.token_bytes(32))
+            challenge = _b64url_encode(
+                hashlib.sha256(verifier.encode("ascii")).digest()
+            )
+            now = int(time.time())
+            signed_state = _sign_payload(
+                {"state": state, "verifier": verifier, "exp": now + OAUTH_STATE_TTL_SECONDS}
+            )
+            authorization_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(
+                {
+                    "client_id": config["client_id"],
+                    "redirect_uri": config["redirect_uri"],
+                    "response_type": "code",
+                    "scope": "openid email profile",
+                    "state": state,
+                    "code_challenge": challenge,
+                    "code_challenge_method": "S256",
+                    "prompt": "select_account",
+                }
+            )
+            response = RedirectResponse(authorization_url, status_code=302)
+            response.set_cookie(
+                OAUTH_STATE_COOKIE,
+                signed_state,
+                **_cookie_options(OAUTH_STATE_TTL_SECONDS),
+            )
+            return response
+        except OAuthConfigurationError as error:
+            raise HTTPException(status_code=503, detail=str(error)) from error
+
+    @app.get("/api/auth/google/callback")
+    def google_oauth_callback(request: Request) -> Any:
+        config: Dict[str, str]
+        try:
+            config = _oauth_config()
+            signed_state = request.cookies.get(OAUTH_STATE_COOKIE, "")
+            state_payload = _verify_signed_payload(signed_state)
+            returned_state = request.query_params.get("state", "")
+            authorization_code = request.query_params.get("code", "")
+            if (
+                not state_payload
+                or not returned_state
+                or not hmac.compare_digest(
+                    str(state_payload.get("state", "")), returned_state
+                )
+                or not authorization_code
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail="OAuth state is missing, invalid, or expired. Please retry login.",
+                )
+
+            token_response = _google_post_form(
+                "https://oauth2.googleapis.com/token",
+                {
+                    "client_id": config["client_id"],
+                    "client_secret": config["client_secret"],
+                    "code": authorization_code,
+                    "code_verifier": str(state_payload["verifier"]),
+                    "grant_type": "authorization_code",
+                    "redirect_uri": config["redirect_uri"],
+                },
+            )
+            access_token = token_response.get("access_token")
+            if not isinstance(access_token, str) or not access_token:
+                raise OAuthConfigurationError("Google did not return an access token.")
+            profile = _google_userinfo(access_token)
+            email = str(profile.get("email", "")).strip().lower()
+            subject = str(profile.get("sub", "")).strip()
+            verified = profile.get("email_verified") is True or str(
+                profile.get("email_verified", "")
+            ).lower() == "true"
+            if not email or not subject or not verified:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Google account email is missing or not verified.",
+                )
+
+            ttl = _session_ttl_seconds()
+            session = _sign_payload(
+                {
+                    "sub": subject,
+                    "email": email,
+                    "name": str(profile.get("name", "")).strip() or email,
+                    "exp": int(time.time()) + ttl,
+                }
+            )
+            role = "super_admin" if email == config["master_email"] else "viewer"
+            response = RedirectResponse(
+                "/app?auth=master" if role == "super_admin" else "/app?auth=viewer",
+                status_code=303,
+            )
+            response.set_cookie(SESSION_COOKIE, session, **_cookie_options(ttl))
+            response.delete_cookie(
+                OAUTH_STATE_COOKIE,
+                path="/",
+                secure=_cookie_options(0)["secure"],
+                httponly=True,
+                samesite="lax",
+            )
+            return response
+        except HTTPException:
+            raise
+        except OAuthConfigurationError as error:
+            raise HTTPException(
+                status_code=502, detail="Google sign-in could not be completed."
+            ) from error
+
+    @app.get("/api/auth/me")
+    def google_oauth_session(request: Request) -> Dict[str, Any]:
+        try:
+            _oauth_config()
+            user = _user_from_session(request.cookies.get(SESSION_COOKIE))
+        except OAuthConfigurationError:
+            return {"oauth_configured": False, "authenticated": False, "role": "visitor"}
+        if not user:
+            return {"oauth_configured": True, "authenticated": False, "role": "visitor"}
+        return {"oauth_configured": True, "authenticated": True, **user}
+
+    @app.post("/api/auth/logout")
+    def google_oauth_logout() -> Response:
+        response = Response(status_code=204)
+        cookie_options = _cookie_options(0)
+        response.delete_cookie(
+            SESSION_COOKIE,
+            path="/",
+            secure=cookie_options["secure"],
+            httponly=True,
+            samesite="lax",
+        )
+        return response
+
+    def api_auth_not_configured() -> Any:
+        raise HTTPException(
+            status_code=503,
+            detail="This endpoint is unavailable until a trusted identity provider and scoped data access are configured.",
+        )
+
+    app.get("/api/stats")(api_auth_not_configured)
+    app.get("/api/permits")(api_auth_not_configured)
+    app.get("/api/coordination")(api_auth_not_configured)
+    app.get("/api/urs")(api_auth_not_configured)
+    app.get("/api/ocr")(api_auth_not_configured)
+    app.get("/api/odoo")(api_auth_not_configured)
+    app.post("/api/agents/query")(api_auth_not_configured)
+    app.post("/api/auth/register-or-login")(api_auth_not_configured)
+
+    @app.post("/api/sync/4h")
+    def fastapi_sync_disabled() -> Dict[str, Any]:
+        raise HTTPException(
+            status_code=503,
+            detail="Synchronization is disabled until authentication and a real data source are configured.",
+        )
+
+    @app.post("/api/site-engineer/action")
+    def fastapi_site_action_disabled(req: SiteEngineerActionRequest) -> Dict[str, Any]:
+        raise HTTPException(
+            status_code=503,
+            detail="The change was not saved; authentication, authorization, and audit storage are not configured.",
+        )
 
     @app.get("/app", response_class=HTMLResponse)
     def serve_web_platform() -> Any:
@@ -559,11 +901,8 @@ try:
         raise HTTPException(status_code=404, detail="ملف المنصة index.html غير موجود")
 
     @app.get("/api/permits/{permit_id}")
-    def fastapi_get_permit(permit_id: str) -> Dict[str, Any]:
-        res = get_permit_13_tabs_profile(permit_id)
-        if res is None:
-            raise HTTPException(status_code=404, detail=f"الرخصة {permit_id} غير موجودة")
-        return res
+    def fastapi_get_permit(permit_id: str) -> Any:
+        return api_auth_not_configured()
 
 except ImportError:
     app = None  # type: ignore[assignment]
@@ -586,6 +925,16 @@ class BuiltinEnterpriseHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         qs = parse_qs(parsed.query)
+
+        if path.startswith("/api/"):
+            self._send_json(
+                {
+                    "error": "AUTH_PROVIDER_NOT_CONFIGURED",
+                    "message": "API data access is disabled until trusted authentication and row scoping are configured.",
+                },
+                status=503,
+            )
+            return
 
         if path in ("/app", "/index.html"):
             if INDEX_HTML_PATH.exists():

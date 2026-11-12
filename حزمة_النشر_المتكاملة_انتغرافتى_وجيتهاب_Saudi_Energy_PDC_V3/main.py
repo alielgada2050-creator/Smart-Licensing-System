@@ -39,7 +39,7 @@ _DB: Dict[str, Any] = {
 }
 _SITE_ENGINEER_LOGS: List[Dict[str, Any]] = []
 _SUPPORT_TICKETS: List[Dict[str, Any]] = []
-_LAST_4H_SYNC: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+_LAST_4H_SYNC: str = "غير متصل"
 
 
 def load_enterprise_database() -> None:
@@ -358,23 +358,9 @@ def list_odoo_tasks() -> Dict[str, Any]:
 
 
 def trigger_4hour_sync() -> Dict[str, Any]:
-    global _LAST_4H_SYNC
-    _LAST_4H_SYNC = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return {
-        "status": "SYNC_COMPLETED",
-        "timestamp": _LAST_4H_SYNC,
-        "agent": "AG-15 (وكيل التحديث التلقائي كل 4 ساعات)",
-        "synced_entities": {
-            "permits": len(_DB["permits"]),
-            "coordination": len(_DB["coordination"]),
-            "urs": len(_DB["urs"]),
-            "pdfs": len(_DB["pdfs"]),
-            "odoo": len(_DB["odoo"]),
-        },
-        "message_ar": (
-            f"تم بنجاح تشغيل دورة المزامنة التلقائية (4 ساعات) في {_LAST_4H_SYNC} "
-            "وفحص شيتات Google Drive وصور الرخص ومهام أودو تحت إشراف مشرف علي الجدع."
-        ),
+        "status": "SYNC_NOT_CONFIGURED",
+        "message_ar": "لم تُنفّذ المزامنة؛ يلزم إعداد تكامل Google Drive/Sheets والتحقق الخادمي أولاً.",
     }
 
 
@@ -423,62 +409,19 @@ def query_egyptian_ai_agent(req: AgentQueryRequest) -> Dict[str, Any]:
 
 
 def register_or_login(req: UserAuthRequest) -> Dict[str, Any]:
-    valid_codes = {"849206", "ALI-JADA-APPROVED", "SEC-PDC-2030", "0597778853"}
-    if req.approval_code and req.approval_code.strip() in valid_codes:
-        return {
-            "status": "APPROVED",
-            "visitor_mode": False,
-            "role": req.requested_role if req.requested_role != "VISITOR" else "APPROVED_SUPERVISOR",
-            "approved_by": "مشرف علي الجدع (alielgada5@gmail.com | 0597778853)",
-            "message": "تم التحقق من كود اعتماد المشرف علي الجدع بنجاح. جميع الشاشات الـ 16 مفتوحة بالكامل.",
-        }
     return {
-        "status": "VISITOR_RESTRICTED",
+        "status": "AUTH_NOT_CONFIGURED",
         "visitor_mode": True,
         "message": (
-            "تم تسجيلك في وضع الزائر (قراءة محدودة). "
-            "لفتح كافة الصلاحيات يرجى التواصل مع المشرف علي الجدع (0597778853 | alielgada5@gmail.com)."
+            "لم يتم إنشاء جلسة دخول؛ Google OAuth غير مهيّأ، ولا تُقبل رموز اعتماد محلية."
         ),
-        "supervisor_contact": {
-            "name": "مشرف علي الجدع",
-            "phone": "0597778853",
-            "whatsapp": "https://wa.me/966597778853",
-            "telegram": "https://t.me/+966597778853",
-            "email": "alielgada5@gmail.com",
-        },
     }
 
 
 def submit_site_engineer_action(req: SiteEngineerActionRequest) -> Dict[str, Any]:
-    updated_permit = None
-    for p in _DB["permits"]:
-        if str(p.get("permit_id", "")) == req.permit_no.strip():
-            p["category"] = req.new_status
-            p["field_status"] = req.new_status
-            if req.urs_status:
-                p["urs_result"] = req.urs_status
-            if req.notes:
-                p["notes"] = req.notes
-            updated_permit = p
-            break
-
-    log_entry = {
-        "tx_id": f"TX-{int(time.time())}",
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "engineer_name": req.engineer_name,
-        "permit_no": req.permit_no,
-        "action_type": req.action_type,
-        "new_status": req.new_status,
-        "urs_status": req.urs_status or "غير محدد",
-        "notes": req.notes,
-        "gps": {"lat": req.lat, "lng": req.lng},
-        "permit_matched": updated_permit is not None,
-    }
-    _SITE_ENGINEER_LOGS.insert(0, log_entry)
     return {
-        "status": "SUCCESS",
-        "transaction": log_entry,
-        "message": f"تم حفظ التحديث الميداني للرخصة {req.permit_no} وإشعار المشرف علي الجدع.",
+        "status": "AUTH_NOT_CONFIGURED",
+        "message": "لم يُحفظ التحديث؛ يلزم إعداد مصادقة موثوقة وصلاحيات خادمية أولاً.",
     }
 
 

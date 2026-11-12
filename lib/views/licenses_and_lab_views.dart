@@ -139,13 +139,12 @@ class MasterLicensesView extends StatelessWidget {
                       child: DropdownButtonFormField<String>(
                         value: ctrl.selectedSlaFilter,
                         decoration: const InputDecoration(
-                          labelText: 'مهلة المختبر (60 يوماً)',
+                          labelText: 'مهلة تقرير المختبر',
                         ),
                         items: const [
                           DropdownMenuItem(value: '', child: Text('جميع مدد المختبر')),
-                          DropdownMenuItem(value: 'crit', child: Text('حرج ≤15 يوم')),
-                          DropdownMenuItem(value: 'warn', child: Text('تنبيه ≤30 يوم')),
-                          DropdownMenuItem(value: 'overdue', child: Text('متجاوزة 60 يوماً')),
+                          DropdownMenuItem(value: 'near', child: Text('قريبة من الاستحقاق')),
+                          DropdownMenuItem(value: 'overdue', child: Text('متأخرة')),
                           DropdownMenuItem(value: 'done', child: Text('مغلقة نهائياً')),
                         ],
                         onChanged: (v) {
@@ -182,7 +181,7 @@ class MasterLicensesView extends StatelessWidget {
                       DataColumn(label: Text('الفئة والحالة التشغيلية')),
                       DataColumn(label: Text('الحي والموقع')),
                       DataColumn(label: Text('نهاية الرخصة')),
-                      DataColumn(label: Text('مهلة المختبر (+60ي)')),
+                      DataColumn(label: Text('مهلة تقرير المختبر')),
                       DataColumn(label: Text('حالة URS')),
                       DataColumn(label: Text('المشرف المختص')),
                       DataColumn(label: Text('إجراءات')),
@@ -190,7 +189,7 @@ class MasterLicensesView extends StatelessWidget {
                     rows: pageItems.asMap().entries.map((entry) {
                       final idx = startIdx + entry.key + 1;
                       final r = entry.value;
-                      final sla = r.calculateSla();
+                      final sla = ctrl.calculatePermitSla(r);
                       return DataRow(
                         cells: [
                           DataCell(Text('$idx')),
@@ -254,7 +253,7 @@ class MasterLicensesView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: sla.slaTier == 'crit' ||
+                              color: sla.slaTier == 'near' ||
                                       sla.slaTier == 'overdue'
                                   ? FluentEnterpriseTheme.dangerFg
                                   : FluentEnterpriseTheme.successFg,
@@ -475,7 +474,7 @@ class _LicenseComparisonViewState extends State<LicenseComparisonView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              '🔍 تحليل ومقارنة الرخص وحساب مهلة الـ 60 يوماً لمختبر URS والجهة المسؤولة',
+              '🔍 تحليل ومقارنة الرخص ومهلة تقرير URS والجهة المسؤولة',
               style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
@@ -498,14 +497,14 @@ class _LicenseComparisonViewState extends State<LicenseComparisonView> {
                   DataColumn(label: Text('الحالة التشغيلية')),
                   DataColumn(label: Text('تاريخ الانتهاء')),
                   DataColumn(label: Text('المتبقي للصلاحية')),
-                  DataColumn(label: Text('آخر موعد للمختبر (+60ي)')),
-                  DataColumn(label: Text('حالة مهلة الـ 60 يوماً')),
+                  DataColumn(label: Text('آخر موعد لتقرير المختبر')),
+                  DataColumn(label: Text('حالة المهلة')),
                   DataColumn(label: Text('نتيجة URS')),
                   DataColumn(label: Text('الجهة الحالية')),
                   DataColumn(label: Text('المشرف / المراقب')),
                 ],
                 rows: rows.map((r) {
-                  final dt = r.calculateSla();
+                  final dt = widget.ctrl.calculatePermitSla(r);
                   final entity = r.category.contains('المركز')
                       ? 'مركز مشاريع البنية التحتية RIPC'
                       : (r.category.contains('الاستشاري')
@@ -540,7 +539,7 @@ class _LicenseComparisonViewState extends State<LicenseComparisonView> {
                         dt.slaLabel,
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: dt.slaTier == 'crit' || dt.slaTier == 'overdue'
+                          color: dt.slaTier == 'near' || dt.slaTier == 'overdue'
                               ? FluentEnterpriseTheme.dangerFg
                               : FluentEnterpriseTheme.successFg,
                         ),
@@ -800,7 +799,7 @@ class UrsLabView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '🔬 سلة تقارير وفحوصات مختبر URS ومهلة الـ 60 يوماً (بإشراف: مشرف علي الجدع)',
+                  '🔬 سلة تقارير وفحوصات مختبر URS ومتابعة المهلة (بإشراف: مشرف علي الجدع)',
                   style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 6),
@@ -938,10 +937,12 @@ class OcrDocumentIntelligenceView extends StatelessWidget {
                       DataCell(Text(p.schemeNo)),
                       DataCell(Text('${p.permitType} (${p.roadBanStatus})')),
                       DataCell(
-                        Text('${p.startDate} ← ${p.endDate} (${p.durationDays}ي)'),
+                        Text('${p.startDate} ← ${p.endDate} (${p.durationDays ?? '—'}ي)'),
                       ),
                       DataCell(
-                        Text('${p.lengthM}م × ${p.widthM}م × ${p.depthM}م'),
+                        Text(
+                          '${p.lengthM ?? '—'}م × ${p.widthM ?? '—'}م × ${p.depthM ?? '—'}م',
+                        ),
                       ),
                       DataCell(Text(p.district)),
                       DataCell(Text(

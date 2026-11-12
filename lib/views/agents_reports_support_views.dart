@@ -29,19 +29,10 @@ class AiAgents15View extends StatefulWidget {
 
 class _AiAgents15ViewState extends State<AiAgents15View> {
   final TextEditingController _chatInputCtrl = TextEditingController();
-  final TextEditingController _apiKeyCtrl = TextEditingController();
-  bool _showApiKeyModal = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _apiKeyCtrl.text = widget.ctrl.voiceAi.googleStudioApiKey;
-  }
 
   @override
   void dispose() {
     _chatInputCtrl.dispose();
-    _apiKeyCtrl.dispose();
     super.dispose();
   }
 
@@ -111,7 +102,7 @@ class _AiAgents15ViewState extends State<AiAgents15View> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'الوكيل 15 يفحص شيتات Google Drive وصور الرخص والتنسيق وأودو تلقائياً كل 4 ساعات | آخر مزامنة: ${ctrl.lastSyncTimestamp}',
+                    'تكامل Google Drive غير مهيأ — لا توجد مزامنة تلقائية | الحالة: ${ctrl.lastSyncTimestamp}',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
@@ -139,7 +130,7 @@ class _AiAgents15ViewState extends State<AiAgents15View> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'التحديث القادم: ${ctrl.formattedFourHourCountdown}',
+                          'حالة التكامل: ${ctrl.formattedFourHourCountdown}',
                           style: const TextStyle(
                             color: FluentEnterpriseTheme.saudiEnergyGreen,
                             fontWeight: FontWeight.w800,
@@ -154,82 +145,15 @@ class _AiAgents15ViewState extends State<AiAgents15View> {
                       backgroundColor: FluentEnterpriseTheme.successFg,
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () => ctrl.runFourHourAutoSync(silent: false),
+                    onPressed: null,
                     icon: const Icon(Icons.sync, size: 16),
-                    label: const Text('تشغيل مزامنة الـ 4 ساعات الآن'),
-                  ),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white38),
-                    ),
-                    onPressed: () => setState(() => _showApiKeyModal = !_showApiKeyModal),
-                    icon: const Icon(Icons.key, size: 16),
-                    label: const Text('إعداد Google AI Studio API'),
+                    label: const Text('المزامنة غير مفعّلة'),
                   ),
                 ],
               ),
             ],
           ),
         ),
-        if (_showApiKeyModal) ...[
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.security, color: FluentEnterpriseTheme.fluentBlue, size: 18),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'إعداد مفتاح Google AI Studio (GEMINI_API_KEY) — بإشراف مشرف علي الجدع (alielgada5@gmail.com)',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => setState(() => _showApiKeyModal = false),
-                        icon: const Icon(Icons.close, size: 18),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _apiKeyCtrl,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'مفتاح GEMINI_API_KEY (اختياري للاتصال السحابي المباشر)',
-                            hintText: 'AIzaSy...',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton.icon(
-                        onPressed: () {
-                          ctrl.voiceAi.googleStudioApiKey = _apiKeyCtrl.text.trim();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('تم حفظ مفتاح Google AI Studio بنجاح وتفعيل الربط الهجين.'),
-                            ),
-                          );
-                          setState(() => _showApiKeyModal = false);
-                        },
-                        icon: const Icon(Icons.save, size: 16),
-                        label: const Text('حفظ وتفعيل'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
         const SizedBox(height: 16),
 
         // استوديو المحادثة الصوتية والنصية مع الوكلاء (باللهجة المصرية + سرعة <15ms)
@@ -287,7 +211,7 @@ class _AiAgents15ViewState extends State<AiAgents15View> {
                       onTap: () => _sendPrompt('حالة تحديث شيتات الدرايف وصور الرخص كل 4 ساعات'),
                     ),
                     _QuickPromptChip(
-                      label: 'تقارير مختبر URS ومهلة 60 يوم',
+                      label: 'تقارير مختبر URS والمهل',
                       onTap: () => _sendPrompt('ما الرخص التي لديها تقرير مختبر راسب؟'),
                     ),
                     _QuickPromptChip(
@@ -557,7 +481,7 @@ class Daily8AmReportView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final overduePermits = ctrl.permits
-        .where((p) => p.calculateSla().slaTier == 'overdue')
+        .where((p) => ctrl.calculatePermitSla(p).slaTier == 'overdue')
         .take(15)
         .toList();
     final returnedCount = ctrl.permits.where((p) => p.category.contains('معاد')).length;
@@ -625,9 +549,9 @@ class Daily8AmReportView extends StatelessWidget {
                       label: const Text('استماع للموجز الصباحي (صوت مصري)'),
                     ),
                     OutlinedButton.icon(
-                      onPressed: () => ctrl.runFourHourAutoSync(silent: false),
+                      onPressed: null,
                       icon: const Icon(Icons.refresh, size: 16),
-                      label: const Text('تحديث بيانات 08:00 ص الآن'),
+                      label: const Text('التحديث غير مفعّل'),
                     ),
                   ],
                 ),
@@ -659,7 +583,7 @@ class Daily8AmReportView extends StatelessWidget {
             _DailyStatCard(
               title: 'فحوصات مختبر URS الموثقة',
               value: '${ctrl.ursInspections.length}',
-              subtitle: 'متابعة مهلة 60 يوماً من الانتهاء',
+              subtitle: 'متابعة المهلة من تاريخ الانتهاء وفق الإعدادات',
               color: const Color(0xFFB91C1C),
               icon: Icons.science_outlined,
             ),
@@ -728,7 +652,7 @@ class Daily8AmReportView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // جدول إنذارات SLA الـ 60 يوماً للمختبر URS
+        // جدول إنذارات مهلة المختبر URS
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -736,7 +660,7 @@ class Daily8AmReportView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'ثانياً: رخص تتطلب رفع شهادة المختبر URS فوراً (تجاوزت 60 يوماً)',
+                  'ثانياً: رخص تجاوزت مهلة تقرير المختبر وفق الإعدادات',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                 ),
                 const SizedBox(height: 10),
@@ -751,11 +675,11 @@ class Daily8AmReportView extends StatelessWidget {
                       DataColumn(label: Text('الأساس / الحي')),
                       DataColumn(label: Text('الاستشاري')),
                       DataColumn(label: Text('الفئة')),
-                      DataColumn(label: Text('حالة SLA المختبر (60 يوم)')),
+                      DataColumn(label: Text('حالة مهلة المختبر')),
                       DataColumn(label: Text('فحص 13 تبويب')),
                     ],
                     rows: overduePermits.map((p) {
-                      final sla = p.calculateSla();
+                      final sla = ctrl.calculatePermitSla(p);
                       return DataRow(
                         cells: [
                           DataCell(
@@ -880,7 +804,7 @@ class _Reports20StudioViewState extends State<Reports20StudioView> {
       case 2:
         return all.where((p) => p.category == 'منتهية (تحتاج معالجة وإغلاق)').toList();
       case 3:
-        return all.where((p) => p.calculateSla().slaTier == 'crit' || p.calculateSla().slaTier == 'warn').toList();
+        return all.where((p) => ctrl.calculatePermitSla(p).slaTier == 'near').toList();
       case 4:
         return all.where((p) => p.category == 'معاد من قبل الاستشاري').toList();
       case 5:
@@ -888,7 +812,7 @@ class _Reports20StudioViewState extends State<Reports20StudioView> {
       case 6:
         return all.where((p) => p.category == 'تم الرفع (بانتظار الإغلاق)').toList();
       case 8:
-        return all.where((p) => p.calculateSla().slaTier == 'overdue').toList();
+        return all.where((p) => ctrl.calculatePermitSla(p).slaTier == 'overdue').toList();
       case 9:
         return all.where((p) => p.category.contains('مختبر')).toList();
       case 10:
@@ -1086,10 +1010,10 @@ class _Reports20StudioViewState extends State<Reports20StudioView> {
                       DataColumn(label: Text('الفئة والحالة')),
                       DataColumn(label: Text('الاستشاري')),
                       DataColumn(label: Text('حالة المختبر URS')),
-                      DataColumn(label: Text('مهلة 60 يوم')),
+                      DataColumn(label: Text('مهلة تقرير المختبر')),
                     ],
                     rows: previewPermits.take(20).map((p) {
-                      final sla = p.calculateSla();
+                      final sla = ctrl.calculatePermitSla(p);
                       return DataRow(
                         cells: [
                           DataCell(
@@ -1161,7 +1085,7 @@ class _ArchitectureAndAc10ViewState extends State<ArchitectureAndAc10View> {
       },
       {
         'id': 'AC-03',
-        'title': 'قاعدة SLA الـ 60 يوماً لشهادة المختبر URS من تاريخ الانتهاء',
+        'title': 'قاعدة مهلة شهادة المختبر URS من تاريخ الانتهاء',
         'metric': 'فحص ${ctrl.ursInspections.length} شهادة مختبر URS',
         'status': 'PASS (100%)',
       },
@@ -1192,7 +1116,7 @@ class _ArchitectureAndAc10ViewState extends State<ArchitectureAndAc10View> {
       {
         'id': 'AC-08',
         'title': 'منظومة الـ 15 وكيلاً ذكياً + مزامنة الـ 4 ساعات التلقائية',
-        'metric': 'المتحقق: 15 وكيلاً + عداد 4 ساعات (${ctrl.formattedFourHourCountdown})',
+        'metric': 'تكامل Drive: ${ctrl.formattedFourHourCountdown}',
         'status': 'PASS (100%)',
       },
       {
@@ -1219,14 +1143,14 @@ class _ArchitectureAndAc10ViewState extends State<ArchitectureAndAc10View> {
       {'code': 'R07', 'role': 'مسؤول التصاريح الكهربائية', 'holder': 'م. عبدالله الشهري', 'level': 'L4 - إصدار تصاريح العمل'},
       {'code': 'R08', 'role': 'مسؤول فك الحظر المروري والطرق', 'holder': 'م. محمد جمال', 'level': 'L4 - معالجة الحظر'},
       {'code': 'R09', 'role': 'مهندس الموقع الميداني (Site Engineer)', 'holder': 'مهندسو المواقع', 'level': 'L3 - تحديث الحالة ورفع الصور'},
-      {'code': 'R10', 'role': 'مهندس مختبر التربة والدمك URS', 'holder': 'فريق مختبر URS', 'level': 'L3 - فحص 73 عينة + SLA 60 يوم'},
+      {'code': 'R10', 'role': 'مهندس مختبر التربة والدمك URS', 'holder': 'فريق مختبر URS', 'level': 'L3 - فحص تقارير URS ومهلها'},
       {'code': 'R11', 'role': 'مراقب جودة الأسفلت والمدني SEC QA/QC', 'holder': 'فريق الجودة (12 سجل)', 'level': 'L3 - اعتماد الاختبارات'},
       {'code': 'R12', 'role': 'أخصائي إغلاق الرخص ومنصة بلدي', 'holder': 'فريق الإخلاء', 'level': 'L3 - إخلاء الطرف النهائي'},
       {'code': 'R13', 'role': 'أخصائي معالجة الرخص المعادة', 'holder': 'فريق المعالجة (480 رخصة)', 'level': 'L3 - تصحيح الملاحظات'},
       {'code': 'R14', 'role': 'مدقق ذكاء المستندات OCR', 'holder': 'الوكيل AG-10 + التدقيق', 'level': 'L3 - مطابقة 64 PDF'},
       {'code': 'R15', 'role': 'منسق مهام أودو ERP', 'holder': 'فريق أودو (41 مهمة)', 'level': 'L3 - ربط أوامر العمل'},
       {'code': 'R16', 'role': 'مراقب الخرائط الجغرافية GIS', 'holder': 'فريق نظم المعلومات', 'level': 'L2 - تتبع الإحداثيات'},
-      {'code': 'R17', 'role': 'مراقب SLA والغرامات البلدية', 'holder': 'الوكيل AG-12 + الامتثال', 'level': 'L2 - تنبيهات 60 يوم'},
+      {'code': 'R17', 'role': 'مراقب SLA والغرامات البلدية', 'holder': 'الوكيل AG-12 + الامتثال', 'level': 'L2 - التنبيهات حسب settings'},
       {'code': 'R18', 'role': 'مدير النظام ومفتاح AI Studio', 'holder': 'مشرف علي الجدع (alielgada5@gmail.com)', 'level': 'L5 - إدارة المفاتيح والأمان'},
       {'code': 'R19', 'role': 'زائر / مستعرض (Visitor Mode)', 'holder': 'الزوار بدون كود اعتماد', 'level': 'L1 - قراءة فقط (مقيد)'},
     ];

@@ -29,19 +29,10 @@ class AiAgents15View extends StatefulWidget {
 
 class _AiAgents15ViewState extends State<AiAgents15View> {
   final TextEditingController _chatInputCtrl = TextEditingController();
-  final TextEditingController _apiKeyCtrl = TextEditingController();
-  bool _showApiKeyModal = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _apiKeyCtrl.text = widget.ctrl.voiceAi.googleStudioApiKey;
-  }
 
   @override
   void dispose() {
     _chatInputCtrl.dispose();
-    _apiKeyCtrl.dispose();
     super.dispose();
   }
 
@@ -158,78 +149,11 @@ class _AiAgents15ViewState extends State<AiAgents15View> {
                     icon: const Icon(Icons.sync, size: 16),
                     label: const Text('تشغيل مزامنة الـ 4 ساعات الآن'),
                   ),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white38),
-                    ),
-                    onPressed: () => setState(() => _showApiKeyModal = !_showApiKeyModal),
-                    icon: const Icon(Icons.key, size: 16),
-                    label: const Text('إعداد Google AI Studio API'),
-                  ),
                 ],
               ),
             ],
           ),
         ),
-        if (_showApiKeyModal) ...[
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.security, color: FluentEnterpriseTheme.fluentBlue, size: 18),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'إعداد مفتاح Google AI Studio (GEMINI_API_KEY) — بإشراف مشرف علي الجدع (alielgada5@gmail.com)',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => setState(() => _showApiKeyModal = false),
-                        icon: const Icon(Icons.close, size: 18),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _apiKeyCtrl,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'مفتاح GEMINI_API_KEY (اختياري للاتصال السحابي المباشر)',
-                            hintText: 'AIzaSy...',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton.icon(
-                        onPressed: () {
-                          ctrl.voiceAi.googleStudioApiKey = _apiKeyCtrl.text.trim();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('تم حفظ مفتاح Google AI Studio بنجاح وتفعيل الربط الهجين.'),
-                            ),
-                          );
-                          setState(() => _showApiKeyModal = false);
-                        },
-                        icon: const Icon(Icons.save, size: 16),
-                        label: const Text('حفظ وتفعيل'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
         const SizedBox(height: 16),
 
         // استوديو المحادثة الصوتية والنصية مع الوكلاء (باللهجة المصرية + سرعة <15ms)

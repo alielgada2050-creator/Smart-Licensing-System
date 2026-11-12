@@ -26,15 +26,15 @@ class EnterpriseController extends ChangeNotifier {
   bool isCompactFocusMode = false;
 
   // Access Gate & Visitor Mode
-  bool isVisitorMode = false;
-  String loggedInEmail = 'alielgada5@gmail.com';
-  String loggedInName = 'مشرف علي الجدع';
-  String loggedInRole = 'general_supervisor';
+  bool isVisitorMode = true;
+  String loggedInEmail = '';
+  String loggedInName = 'زائر';
+  String loggedInRole = 'visitor';
 
   // 4-Hour Auto-Sync Timer
-  int fourHourSecondsRemaining = 4 * 3600 - 5;
+  int fourHourSecondsRemaining = 0;
   Timer? _syncCountdownTimer;
-  String lastSyncTimestamp = '2026-11-09 08:00:00 +03:00';
+  String lastSyncTimestamp = 'غير متصل';
 
   // Filters for Licenses Table
   String selectedLicenseCategory = 'ALL';
@@ -171,26 +171,13 @@ class EnterpriseController extends ChangeNotifier {
 
   void _startFourHourTimer() {
     _syncCountdownTimer?.cancel();
-    _syncCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (fourHourSecondsRemaining > 0) {
-        fourHourSecondsRemaining--;
-      } else {
-        fourHourSecondsRemaining = 4 * 3600;
-        runFourHourAutoSync(silent: true);
-      }
-      notifyListeners();
-    });
   }
 
-  String get formattedFourHourCountdown {
-    final h = (fourHourSecondsRemaining ~/ 3600).toString().padLeft(2, '0');
-    final m = ((fourHourSecondsRemaining % 3600) ~/ 60).toString().padLeft(2, '0');
-    final s = (fourHourSecondsRemaining % 60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
-  }
+  String get formattedFourHourCountdown => 'غير مفعّل';
 
   bool get isAuthorizedSupervisor =>
       !isVisitorMode &&
+      loggedInRole == 'general_supervisor' &&
       (loggedInEmail.toLowerCase() == 'alielgada5@gmail.com' ||
           loggedInName.contains('الجدع') ||
           loggedInName.contains('مشرف'));
@@ -240,32 +227,15 @@ class EnterpriseController extends ChangeNotifier {
     required String name,
     required String otpCode,
   }) {
-    loggedInEmail = email.trim();
-    loggedInName = name.trim();
-    isVisitorMode = false;
-    selectedLicenseCategory = 'ALL';
-    if (loggedInEmail.toLowerCase() == 'alielgada5@gmail.com' ||
-        otpCode.trim() == '849206' ||
-        otpCode.trim() == 'ALI-JADA-APPROVED') {
-      loggedInRole = 'general_supervisor';
-    } else {
-      loggedInRole = 'site_engineer';
-    }
-    notifyListeners();
-    return true;
+    return false;
   }
 
   void runFourHourAutoSync({bool silent = false}) {
-    fourHourSecondsRemaining = 4 * 3600;
-    final now = DateTime.now();
-    lastSyncTimestamp =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
     if (!silent) {
       voiceAi.speakEgyptianMale(
-        'تم تشغيل دورة التحديث الآلي كل أربع ساعات من جوجل درايف وأودو بنجاح يا باشمهندس، وفحص ${permits.length} رخصة و ${coordinationItems.length} معاملة.',
+        'لم تتم المزامنة؛ تسجيل Google OAuth وربط Google Drive وSheets غير مهيأين بعد.',
       );
     }
-    notifyListeners();
   }
 
   // Filtered Licenses

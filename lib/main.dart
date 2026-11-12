@@ -349,6 +349,19 @@ class _EnterpriseMainShellState extends State<EnterpriseMainShell> {
       body: Column(
         children: [
           _buildTopLuminousHeader(context, ctrl, isDesktop, isDark),
+          if (ctrl.databaseLoadError != null)
+            MaterialBanner(
+              content: Text(
+                'تعذر تحميل بيانات المنصة: ${ctrl.databaseLoadError}',
+              ),
+              leading: const Icon(Icons.error_outline, color: Colors.red),
+              actions: [
+                TextButton(
+                  onPressed: ctrl.reloadData,
+                  child: Text(ctrl.tr('إعادة المحاولة', 'Retry')),
+                ),
+              ],
+            ),
           if (ctrl.isVisitorMode) _buildVisitorBanner(context, ctrl),
           Expanded(
             child: Row(
@@ -527,7 +540,7 @@ class _EnterpriseMainShellState extends State<EnterpriseMainShell> {
                 // عداد التحديث كل 4 ساعات
                 InkWell(
                   borderRadius: BorderRadius.circular(8),
-                  onTap: () => ctrl.runFourHourAutoSync(silent: false),
+                  onTap: null,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
@@ -544,8 +557,8 @@ class _EnterpriseMainShellState extends State<EnterpriseMainShell> {
                         const SizedBox(width: 5),
                         Text(
                           ctrl.tr(
-                            'تحديث 4س: ${ctrl.formattedFourHourCountdown}',
-                            '4h Sync: ${ctrl.formattedFourHourCountdown}',
+                            'Drive: ${ctrl.formattedFourHourCountdown}',
+                            'Drive: ${ctrl.formattedFourHourCountdown}',
                           ),
                           style: TextStyle(
                             fontSize: 11.5,

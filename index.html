@@ -2813,7 +2813,7 @@ html[data-theme="dark"] .badge.bg-purple {
           <span id="dbStatusBadge" style="display:none;">متصلة ✓</span>
           <!-- منظومة الدخول: التبديل بين وضع الزائر (الرخص العاملة وتحت التنفيذ فقط) والدخول المعتمد بموافقة المشرف علي الجدع -->
           <div id="gmailAuthBadge" class="pill-metric" style="padding:4px 9px;font-size:11px;cursor:pointer;background:#EFF6FF;border-color:#BFDBFE;" onclick="openAccessGateModal()">
-            <span id="accessModeStatusText">🔓 دخول معتمد (كامل المنصة)</span>
+            <span id="accessModeStatusText">👁️ وضع الزائر</span>
           </div>
           <button class="btn btn-sm" id="visitorModeToggleBtn" style="height:30px;padding:0 9px;font-size:11px;border-color:#F59E0B;color:#B45309;background:#FFFBEB;" onclick="toggleVisitorModeQuick()" title="تفعيل أو إلغاء وضع الزائر (يرى فقط المنصات والرخص التي تعمل أو تحت التنفيذ)">
             👁️ وضع الزائر
@@ -2853,7 +2853,7 @@ html[data-theme="dark"] .badge.bg-purple {
             👁️ أنت تتصفح المنصة حالياً في «وضع الزائر» — يقتصر العرض على المنصات والرخص التي تعمل (السارية) أو التي تحت التنفيذ فقط.
           </div>
           <div style="font-size:11.5px;color:#78350F;margin-top:3px;">
-            للاطلاع على باقي أقسام المنصة أو التعديل أو استخراج كافة الشيتات، يتوجب <strong>تسجيل الدخول وموافقة المشرف علي الجدع</strong> عبر الإيميل المرفق في الدعم الفني (<code>alielgada5@gmail.com</code>) أو عبر الواتساب (<code>0597778853</code>).
+            لا تتوفر صلاحيات التعديل أو الدخول لباقي الأقسام حتى إعداد Google OAuth والتحقق الخادمي.
           </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -2866,11 +2866,7 @@ html[data-theme="dark"] .badge.bg-purple {
       </div>
 
       <!-- تم إزالة المساعد الصوتي من الواجهة بناءً على طلب المستخدم مع الإبقاء على محرك البحث وتصدير الشيتات بالخلفية -->
-      <div id="studioApiConfigBox" style="display:none;">
-        <input type="hidden" id="googleStudioApiKeyInput" value="">
-        <select id="googleStudioFastModelSelect" style="display:none;"><option value="gemini-3.8-flash">gemini-3.8-flash</option></select>
-        <input type="hidden" id="egyptianAiFastQueryInput" value="">
-      </div>
+      <input type="hidden" id="egyptianAiFastQueryInput" value="">
       <div id="egyptianAiFastResultBox" style="display:none;"></div>
 
       <!-- ================================================================ -->
@@ -3725,6 +3721,13 @@ html[data-theme="dark"] .badge.bg-purple {
       <section id="view-returned" class="view-panel">
         <div class="kpi-grid" id="returnedKpiGrid"></div>
 
+        <div class="card" style="border-right:4px solid var(--sem-orange);">
+          <div class="card-title">🧰 مسارات معالجة الإعادات</div>
+          <p style="font-size:12px;color:var(--text-secondary);margin-top:5px;">
+            تُسجل إعادة مركز المشاريع RIPC وإعادة الاستشاري كمسارين مستقلين مع سبب الإعادة وإثبات المعالجة، ثم تُراجع قبل إعادة التقديم. لم تُنشأ مهام فعلية من الشيت المرفق.
+          </p>
+        </div>
+
         <div class="card">
           <div class="card-header">
             <div class="card-title">🔄 سجل إدارة الرخص المعادة ومعالجة الملاحظات (Returned License Recovery — 481 رخصة معادة)</div>
@@ -3766,6 +3769,20 @@ html[data-theme="dark"] .badge.bg-purple {
       <!-- ================================================================ -->
       <section id="view-urs" class="view-panel">
         <div class="kpi-grid" id="ursKpiGrid"></div>
+
+        <div class="card" style="border-right:4px solid var(--brand-gold);">
+          <div class="card-title">🛣️ مجموعة الأسفلت والتنسيق والمختبر</div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;font-size:12px;">
+            <span class="badge bg-blue">تنسيق وتجهيز الموقع</span>
+            <span aria-hidden="true">←</span>
+            <span class="badge bg-gold">إكمال الأسفلت عند انطباقه</span>
+            <span aria-hidden="true">←</span>
+            <span class="badge bg-purple">فحص المختبر URS</span>
+          </div>
+          <p style="font-size:11px;color:var(--text-secondary);margin-top:7px;">
+            يبدأ بند المختبر بعد إكمال بند الأسفلت المرتبط به فقط؛ ويُربط كل بند بالرخصة وإثباته. هذا وصف لمسار العمل، وليس حالة إنجاز حالية أو اعتماداً فنياً تلقائياً.
+          </p>
+        </div>
 
         <div class="card">
           <div class="card-header">
@@ -4124,6 +4141,25 @@ html[data-theme="dark"] .badge.bg-purple {
       <!-- VIEW 12: ODOO ERP, WHATSAPP & GOOGLE DRIVE INTEGRATIONS (Sec 16,17) -->
       <!-- ================================================================ -->
       <section id="view-integrations" class="view-panel">
+        <div class="card" style="border-top:4px solid var(--sem-blue);">
+          <div class="card-header" style="flex-wrap:wrap;gap:12px;">
+            <div>
+              <div class="card-title">📥 مراجعة تحديث شيتات الرخص</div>
+              <p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+                ارفع Excel/CSV للرخص السارية أو المنتهية أو المعادة لقراءة الأعمدة ومقارنة رقم الرخصة والبيانات مع السجل الحالي. لا تُحفظ التغييرات ولا تُطبّق تلقائياً.
+              </p>
+            </div>
+            <label class="btn btn-sm btn-primary" style="cursor:pointer;margin:0;">
+              📂 اختيار شيت للمراجعة
+              <input type="file" id="permitWorkbookInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handlePermitWorkbookUpload(event)">
+            </label>
+          </div>
+          <div id="permitImportStatus" role="status" aria-live="polite" style="padding:0 14px 12px;color:var(--text-secondary);font-size:12px;">
+            المعاينة محلية في هذه الجلسة. اعتماد التغييرات والرفع إلى Drive يتطلبان تفعيل دخول Google الموثق والخادم.
+          </div>
+          <div id="permitImportPreview" style="padding:0 14px 14px;"></div>
+        </div>
+
         <!-- Live Odoo ERP (alasas.odoo.com) Workspace Banner & App Grid -->
         <div class="card" style="border-top:4px solid #714B67;">
           <div class="card-header" style="flex-wrap:wrap;gap:12px;">
@@ -4131,10 +4167,10 @@ html[data-theme="dark"] .badge.bg-purple {
               <div class="card-title" style="display:flex;align-items:center;gap:8px;">
                 <span>🟣 بوابة الربط الثنائي المتكامل مع نظام أودو ERP</span>
                 <a href="https://alasas.odoo.com/web#cids=1&action=menu" target="_blank" class="badge bg-blue mono" style="text-decoration:none;">alasas.odoo.com/web#cids=1&amp;action=menu ↗</a>
-                <span class="badge bg-green">متصل بحساب مشرف الرخص والمختبر (Odoo): مشرف علي الجدع ✓</span>
+                <span class="badge bg-yellow">تكاملات Google وOdoo غير مفعّلة — بانتظار إعدادات OAuth ومراجعة الصلاحيات</span>
               </div>
               <p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
-                ربط مباشر وشامل بين المنصة الذكية (945 رخصة + 85 معاملة أسبوعية + 52 فحص مختبر URS) وبين تطبيقات أودو المعتمدة في الشركة ومجلدات Google Drive (استيراد وتصدير JSON / Excel / CSV / Python XML-RPC Bridge).
+                تتوفر معاينة ملفات Excel/CSV محلياً. ربط Drive/Sheets وOdoo الفعلي يتطلب مصادقة المستخدم وموافقة صلاحيات APIs؛ الروابط القديمة لا تُعد اتصالاً موثقاً.
               </p>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
@@ -4151,15 +4187,9 @@ html[data-theme="dark"] .badge.bg-purple {
           <!-- Odoo Apps Mapped Grid (matching user screenshot image_c34b98.png) -->
           <div id="odooAppsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;margin-bottom:14px;"></div>
 
-          <!-- Google Drive Connected Folders Bar -->
+          <!-- Google Drive configuration status -->
           <div style="padding:10px 12px;background:var(--bg-muted);border:1px solid var(--border-col);border-radius:8px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;">
-            <div style="font-size:12px;font-weight:700;color:var(--text-primary);">☁️ مجلدات Google Drive المربوطة تزامنياً مع أودو والمنصة:</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;">
-              <a href="https://drive.google.com/drive/folders/1501h5AVNJHdga7jzoGXn1ryxk6zdnKUz" target="_blank" class="btn btn-sm btn-outline" style="text-decoration:none;">📁 جدول تنسيق الأعمال الأسبوعي (85) ↗</a>
-              <a href="https://drive.google.com/drive/folders/1Ve3EyX-eIK1UD6vTRZnnU0RrhVp0IRZ9" target="_blank" class="btn btn-sm btn-outline" style="text-decoration:none;">📁 حالة الرخص مركز المشاريع (945) ↗</a>
-              <a href="https://drive.google.com/drive/folders/1NAPYUAV2ow9UeqEvK3z-OC0KAOcuah3N" target="_blank" class="btn btn-sm btn-outline" style="text-decoration:none;">📁 ملفات الرخص PDF (55) ↗</a>
-              <a href="https://drive.google.com/drive/folders/1vvVpL-fDBQ0yomdHCvqysds3n1lvsvlp" target="_blank" class="btn btn-sm btn-outline" style="text-decoration:none;">📁 التقرير الوارد من المختبر URS (52) ↗</a>
-            </div>
+            <div style="font-size:12px;font-weight:700;color:var(--text-primary);">☁️ Google Drive/Sheets: غير متصلين حالياً. لا تُرسل ملفات أو بيانات إلى Google قبل تسجيل دخول المستخدم ومراجعته للصلاحيات.</div>
           </div>
         </div>
 
@@ -5929,9 +5959,7 @@ function renderDailyReport() {
 }
 
 function triggerDailySyncNow() {
-  renderAllModules();
-  renderDailyReport();
-  showToast("تم تشغيل وظيفة المزامنة اليومية (Daily License Intelligence) بنجاح وتحديث كافة المؤشرات بتوقيت الرياض.");
+  showToast("المزامنة اليومية غير مفعّلة: لم يتم إعداد مصادقة Google أو ربط Drive/Sheets بالخادم.");
 }
 
 // ============================================================================
@@ -6029,18 +6057,361 @@ function exportFullSystemExcel() {
   XLSX.writeFile(wb, "منظومة_الإدارة_الذكية_للرخص_والبنية_التحتية_V3_Export.xlsx");
 }
 
-function handleExcelUpload(evt) {
-  const file = evt.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
-    let count = 0;
-    wb.SheetNames.forEach(s => {
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[s], { defval: "" });
-      count += rows.length;
+const PERMIT_IMPORT_COLUMNS = {
+  "رقمالرخصة": "permit_id",
+  "permitid": "permit_id",
+  "رقمالطلب": "request_no",
+  "نوعالرخصة": "permit_type",
+  "مدةالرخصة": "duration_days",
+  "تاريخاصدارالرخصة": "issue_date",
+  "تاريخانتهاءالرخصة": "end_date",
+  "حالةالطلب": "source_status",
+  "الحالة": "source_status",
+  "اسمالمقاول": "contractor",
+  "رقمهويةالمقاول": "contractor_id",
+  "رقمجوالالمقاول": "contractor_phone",
+  "اسمالجهةالمشرفة": "supervising_entity",
+  "هويةالجهةالمشرفة": "supervising_entity_id",
+  "هويهالجهةالمشرفة": "supervising_entity_id",
+  "اسمالاستشاري": "consultant",
+  "رقمهويةالاستشاري": "consultant_id",
+  "رقمجوالالاستشاري": "consultant_phone",
+  "اسمالمشروع": "project_name",
+  "طولالرخصة": "length_m",
+  "عرضالمسار": "width_m",
+  "عمقالمسار": "depth_m",
+  "نوعالحفر": "dig_type",
+  "تكلفةالرخصة": "cost",
+  "اسممقدمالطلب": "applicant",
+  "تاريخدخولدورةالتنسيقات": "coordination_entry_date",
+  "اسمالمختبر": "lab",
+  "رقمهويةالمختبر": "lab_id",
+  "اسم الشارع": "street",
+  "اسمالشارع": "street",
+  "الحي": "district",
+  "البلدية": "municipality",
+  "المحافظة": "province",
+  "الاحداثيات": "coordinates",
+  "الجهاتالحاظرة": "blocked_parties",
+  "تاريخمعالجةالجهةالمشرفة": "supervisor_processed_date",
+  "تاريخمعالجةالمركز": "center_processed_date",
+  "تاريختفعيلالرخصة": "activation_date",
+  "تاريخبدايةالحفرالمخطط": "planned_dig_start",
+  "تاريخنهايةالرخصة": "end_date",
+  "تمرفعتقريرالمختبر؟": "lab_uploaded",
+  "تمرفعصوربعدالانتهاءمنالأعمال؟": "photos_uploaded"
+};
+
+const PERMIT_IMPORT_COMPARISON_FIELDS = [
+  ["نوع الرخصة", "permit_type"],
+  ["مدة الرخصة", "duration_days"],
+  ["تاريخ الإصدار", "issue_date"],
+  ["تاريخ الانتهاء", "end_date"],
+  ["المقاول", "contractor"],
+  ["الاستشاري", "consultant"],
+  ["المشروع", "project_name"],
+  ["الطول", "length_m"],
+  ["العرض", "width_m"],
+  ["العمق", "depth_m"],
+  ["نوع الحفر", "dig_type"],
+  ["التكلفة", "cost"],
+  ["المختبر", "lab"],
+  ["الشارع", "street"],
+  ["الحي", "district"],
+  ["البلدية", "municipality"],
+  ["المحافظة", "province"],
+  ["الإحداثيات", "coordinates"],
+  ["رفع تقرير المختبر", "lab_uploaded"],
+  ["رفع الصور", "photos_uploaded"]
+];
+
+function normalizePermitImportHeader(value) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .replace(/[（(].*?[）)]/g, "")
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
+    .replace(/[\s_\-]+/g, "")
+    .toLowerCase();
+}
+
+function normalizePermitImportStatus(value) {
+  const status = String(value ?? "").trim().normalize("NFKC");
+  if (!status) return "missing";
+  if (/معاد|معادة|إعادة|اعادة/.test(status)) return "returned";
+  if (/منته[ىي]|انته[ىي]/.test(status)) return "expired";
+  if (/سار[ىي]|فعال|مفعل|تنفيذ/.test(status)) return "active";
+  if (/مغلق|مكتمل/.test(status)) return "closed";
+  if (/ملغ[ىي]|إلغاء|الغاء/.test(status)) return "cancelled";
+  return "unmapped";
+}
+
+function normalizePermitImportValue(value, field) {
+  if (value === null || value === undefined) return "";
+  const normalized = String(value).trim();
+  if (!normalized) return "";
+  if (field && field.endsWith("_date")) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return normalized;
+    const parsed = new Date(normalized);
+    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+    throw new Error(`تاريخ غير صالح في العمود (${field})`);
+  }
+  return normalized.replace(/\s+/g, " ");
+}
+
+function escapePermitImportHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+function analyzePermitWorkbook(workbook) {
+  const permitsById = new Map();
+  PERMITS_DB.forEach(permit => {
+    const id = String(permit.permit_id ?? "").trim();
+    if (id && !permitsById.has(id)) permitsById.set(id, permit);
+  });
+
+  const seenIds = new Set();
+  const result = {
+    sourceRows: 0,
+    matched: 0,
+    newRecords: 0,
+    changed: 0,
+    unchanged: 0,
+    rejected: 0,
+    unmappedStatus: 0,
+    unknownColumns: new Set(),
+    statusCounts: {},
+    rows: []
+  };
+
+  workbook.SheetNames.forEach(sheetName => {
+    const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+      header: 1,
+      raw: false,
+      defval: "",
+      blankrows: false
     });
-    showToast(`تم فحص الملف (${file.name}) بنجاح (${count} سجل) عبر وكيل ذكاء الرخص (Agent 1) ومطابقته مع قاعدة البيانات دون تكرار.`);
+    if (!matrix.length) return;
+
+    const headers = matrix[0].map(value => normalizePermitImportHeader(value));
+    const columnMap = headers.map(header => PERMIT_IMPORT_COLUMNS[header] || null);
+    if (!columnMap.includes("permit_id") || columnMap.filter(field => field === "permit_id").length !== 1) {
+      const rejectedRows = matrix.slice(1).filter(row =>
+        row.some(value => String(value ?? "").trim())
+      ).length;
+      result.sourceRows += rejectedRows;
+      result.rejected += rejectedRows;
+      result.rows.push({
+        sheet: sheetName,
+        rowNumber: 1,
+        permitId: "",
+        disposition: "rejected",
+        reason: columnMap.includes("permit_id")
+          ? "يوجد أكثر من عمود لرقم الرخصة؛ تعذر تحديد المفتاح"
+          : "لم يتم العثور على عمود رقم الرخصة"
+      });
+      return;
+    }
+
+    matrix.slice(1).forEach((cells, rowIndex) => {
+      if (!cells.some(value => String(value ?? "").trim())) return;
+      result.sourceRows++;
+      const sourceRow = {};
+      columnMap.forEach((field, index) => {
+        if (field) sourceRow[field] = cells[index] ?? "";
+        else if (headers[index]) result.unknownColumns.add(String(matrix[0][index]));
+      });
+      const permitId = normalizePermitImportValue(sourceRow.permit_id);
+      const row = {
+        sheet: sheetName,
+        rowNumber: rowIndex + 2,
+        permitId,
+        disposition: "rejected",
+        reason: "",
+        differences: [],
+        statusGroup: normalizePermitImportStatus(sourceRow.source_status)
+      };
+
+      if (!permitId) {
+        row.reason = "رقم الرخصة فارغ";
+        result.rejected++;
+        result.rows.push(row);
+        return;
+      }
+      if (seenIds.has(permitId)) {
+        row.reason = "رقم الرخصة مكرر داخل الملف؛ لم تتم مطابقة نسخة مكررة";
+        result.rejected++;
+        result.rows.push(row);
+        return;
+      }
+      seenIds.add(permitId);
+
+      let invalidDate = "";
+      for (const field of ["issue_date", "end_date", "coordination_entry_date", "supervisor_processed_date", "center_processed_date", "activation_date", "planned_dig_start"]) {
+        try {
+          sourceRow[field] = normalizePermitImportValue(sourceRow[field], field);
+        } catch (error) {
+          invalidDate = error.message;
+          break;
+        }
+      }
+      if (invalidDate) {
+        row.reason = invalidDate;
+        result.rejected++;
+        result.rows.push(row);
+        return;
+      }
+      if (sourceRow.issue_date && sourceRow.end_date && sourceRow.end_date < sourceRow.issue_date) {
+        row.reason = "تاريخ الانتهاء يسبق تاريخ الإصدار";
+        result.rejected++;
+        result.rows.push(row);
+        return;
+      }
+
+      const existing = permitsById.get(permitId);
+      if (!existing) {
+        row.disposition = "new";
+        row.reason = "رخصة غير موجودة في السجل الحالي؛ تتطلب مراجعة";
+        result.newRecords++;
+      } else {
+        result.matched++;
+        for (const [label, field] of PERMIT_IMPORT_COMPARISON_FIELDS) {
+          const incoming = normalizePermitImportValue(sourceRow[field], field);
+          if (!incoming) continue;
+          const current = normalizePermitImportValue(existing[field], field);
+          if (field === "duration_days" || field === "length_m" || field === "width_m" || field === "depth_m" || field === "cost") {
+            if (Number(incoming) === Number(current)) continue;
+          } else if (field.endsWith("_date")) {
+            if (incoming === current) continue;
+          } else if (incoming.normalize("NFKC") === current.normalize("NFKC")) {
+            continue;
+          }
+          row.differences.push({ field: label, current, incoming });
+        }
+        if (sourceRow.source_status) {
+          const currentStatus = normalizePermitImportStatus(existing.category);
+          if (row.statusGroup === "unmapped" || currentStatus === "unmapped") {
+            row.reason = "الحالة تحتاج تعييناً يدوياً؛ لم تُفسّر تلقائياً";
+            result.unmappedStatus++;
+          } else if (row.statusGroup !== currentStatus) {
+            row.differences.push({
+              field: "الحالة",
+              current: existing.category || "غير محددة",
+              incoming: sourceRow.source_status
+            });
+          }
+        }
+        row.disposition = row.differences.length ? "changed" : "unchanged";
+        if (row.disposition === "changed") result.changed++;
+        else result.unchanged++;
+      }
+
+      if (row.statusGroup === "unmapped") result.unmappedStatus++;
+      const statusKey = row.statusGroup === "unmapped" ? "بحاجة لتعيين" :
+        row.statusGroup === "missing" ? "غير مذكورة" : row.statusGroup;
+      result.statusCounts[statusKey] = (result.statusCounts[statusKey] || 0) + 1;
+      result.rows.push(row);
+    });
+  });
+  return result;
+}
+
+function renderPermitWorkbookPreview(fileName, result) {
+  const statusLabels = {
+    active: "سارية",
+    expired: "منتهية",
+    returned: "معادة",
+    closed: "مغلقة",
+    cancelled: "ملغاة",
+    "بحاجة لتعيين": "بحاجة لتعيين",
+    "غير مذكورة": "غير مذكورة"
+  };
+  const statusSummary = Object.entries(result.statusCounts)
+    .map(([status, count]) => `${escapePermitImportHtml(statusLabels[status] || status)}: ${count}`)
+    .join(" | ");
+  const rowsHtml = result.rows.map(row => {
+    const differenceText = row.differences.length
+      ? row.differences.map(diff =>
+          `${escapePermitImportHtml(diff.field)}: ${escapePermitImportHtml(diff.current || "—")} ← ${escapePermitImportHtml(diff.incoming || "—")}`
+        ).join("<br>")
+      : escapePermitImportHtml(row.reason || "لا توجد فروقات ظاهرة");
+    const labels = {
+      new: "جديد",
+      changed: "تغيّر",
+      unchanged: "مطابق",
+      rejected: "مرفوض"
+    };
+    return `<tr>
+      <td>${escapePermitImportHtml(row.sheet)} / ${row.rowNumber}</td>
+      <td class="mono">${escapePermitImportHtml(row.permitId || "—")}</td>
+      <td>${escapePermitImportHtml(labels[row.disposition] || row.disposition)}</td>
+      <td>${differenceText}</td>
+    </tr>`;
+  }).join("");
+  const unknownColumns = [...result.unknownColumns].filter(Boolean);
+  const unknownNote = unknownColumns.length
+    ? `<div style="margin-top:8px;color:var(--text-secondary);font-size:11px;">أعمدة غير مستخدمة في المقارنة (${unknownColumns.length}): ${unknownColumns.map(escapePermitImportHtml).join("، ")}</div>`
+    : "";
+  const preview = document.getElementById("permitImportPreview");
+  preview.innerHTML = `
+    <div style="font-size:12px;margin:0 0 8px;"><strong>الملف:</strong> ${escapePermitImportHtml(fileName)} — <strong>الحالات:</strong> ${statusSummary || "لا توجد حالات"}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:7px;margin-bottom:10px;">
+      <div class="stat-card"><strong>${result.sourceRows}</strong><span>صفوف بيانات</span></div>
+      <div class="stat-card"><strong>${result.matched}</strong><span>مطابقات برقم دقيق</span></div>
+      <div class="stat-card"><strong>${result.newRecords}</strong><span>رخص جديدة</span></div>
+      <div class="stat-card"><strong>${result.changed}</strong><span>سجلات متغيرة</span></div>
+      <div class="stat-card"><strong>${result.unchanged}</strong><span>بلا فروقات</span></div>
+      <div class="stat-card"><strong>${result.rejected}</strong><span>مرفوضة</span></div>
+    </div>
+    <div style="padding:9px 11px;background:var(--bg-muted);border:1px solid var(--border-color);border-radius:7px;font-size:11px;">
+      ${result.unmappedStatus ? `هناك ${result.unmappedStatus} حالة تحتاج تعييناً يدوياً. ` : ""}
+      تمت المقارنة دون ربط تقريبي ودون تعديل البيانات. اعتماد الفروقات معطّل حتى تفعيل المصادقة والخادم وسجل التدقيق.
+    </div>
+    ${unknownNote}
+    <div class="table-scroll" style="margin-top:10px;max-height:360px;">
+      <table class="ent-table">
+        <thead><tr><th>المصدر / الصف</th><th>رقم الرخصة</th><th>نتيجة المقارنة</th><th>الفروقات أو سبب الرفض</th></tr></thead>
+        <tbody>${rowsHtml || '<tr><td colspan="4">لا توجد صفوف بيانات في الملف.</td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+
+function handlePermitWorkbookUpload(event) {
+  const input = event.target;
+  const file = input.files?.[0];
+  if (!file) return;
+  const status = document.getElementById("permitImportStatus");
+  const preview = document.getElementById("permitImportPreview");
+  preview.innerHTML = "";
+  status.textContent = `جارٍ قراءة ${file.name} محلياً؛ لن يتم رفع الملف أو تغييره.`;
+  if (typeof XLSX === "undefined") {
+    status.textContent = "تعذرت قراءة Excel لأن مكتبة قراءة الجداول غير متاحة. لم يتم رفع الملف.";
+    input.value = "";
+    return;
+  }
+  const reader = new FileReader();
+  reader.onerror = () => {
+    status.textContent = "تعذرت قراءة الملف من الجهاز. أعد المحاولة بملف Excel أو CSV صالح.";
+    input.value = "";
+  };
+  reader.onload = eventResult => {
+    try {
+      const workbook = XLSX.read(new Uint8Array(eventResult.target.result), { type: "array", cellDates: true });
+      const result = analyzePermitWorkbook(workbook);
+      renderPermitWorkbookPreview(file.name, result);
+      status.textContent = `اكتملت معاينة ${file.name}. لم تُحفظ تغييرات ولم يُرسل الملف إلى Google أو أي خدمة خارجية.`;
+    } catch (error) {
+      console.error("Permit workbook preview failed", error);
+      status.textContent = `فشلت معاينة الملف: ${error.message || "صيغة غير مدعومة"}. لم يتم تطبيق أي تغيير.`;
+      preview.textContent = "";
+    } finally {
+      input.value = "";
+    }
   };
   reader.readAsArrayBuffer(file);
 }
@@ -6343,7 +6714,7 @@ function saveStateToDatabase(actionLabel, detailsText) {
     localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbState));
     const badge = document.getElementById("dbStatusBadge");
     if (badge) {
-      badge.textContent = `محفوظة (${new Date().toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'})}) ✓`;
+      badge.textContent = `محفوظ محلياً (${new Date().toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'})})`;
     }
     if (isGmailAuthenticated && authenticatedGmailUser.email) {
       logAndSendGmailAfterUpload(authenticatedGmailUser.email, actionLabel, detailsText);
@@ -6367,17 +6738,15 @@ function loadStateFromDatabase() {
 }
 
 function logAndSendGmailAfterUpload(email, subjectAction, bodyDetails) {
-  // Records the Gmail confirmation message in the database and notifies the user
-  const msgId = "GMAIL-MSG-" + Math.floor(100000 + Math.random() * 900000);
-  showToast(`📧 تم إرسال رسالة تأكيد فورية إلى بريد الجيميل (${email}) رقم [${msgId}]: | • العملية: ${subjectAction} | • التفاصيل: ${bodyDetails} | • تم الحفظ في قاعدة البيانات (Database) بنجاح.`);
+  showToast("لم يُرسل البريد أو يُحفظ في قاعدة بيانات خادمية؛ يلزم إعداد خدمة البريد والمصادقة أولاً.");
 }
 
 function exportDatabaseBackupJson() {
   const fullDb = {
     database_engine: "Saudi Energy & PDC & Al-Asas Al-Areedh Enterprise DB V3.2",
     general_supervisor: "مشرف علي الجدع",
-    gmail_verified_user: authenticatedGmailUser.email || "alielgada5@gmail.com",
-    last_four_hour_sync: new Date().toISOString(),
+    gmail_verified_user: (authenticatedGmailUser && authenticatedGmailUser.email) || "غير مسجل",
+    last_four_hour_sync: "غير متصل",
     tables: {
       permits_945: PERMITS_DB,
       weekly_coordination_85: COORD_ITEMS,
@@ -6662,7 +7031,7 @@ function submitSiteEngineerCoordinationRequest() {
     renderPreExecEarlyWarnings();
     renderSiteEngineerRequestsTable();
     saveStateToDatabase(`طلب تنسيق مهندس الموقع (${mode})`, `طلب ${reqId}: ${newBase} (${newTx}) — ${reason}`);
-    showToast(`✅ تم تنفيذ طلب مهندس الموقع (${reqId}) وتحديث جدول التنسيق الأسبوعي والشيت وإرسال إشعار الجيميل إلى (مشرف علي الجدع)!`);
+    showToast(`تم تسجيل الطلب محلياً فقط (${reqId})؛ لم يُرسل بريد ولم تتم مزامنة Google Sheets.`);
   });
 }
 
@@ -7054,36 +7423,16 @@ function renderPreExecEarlyWarnings() {
 
 
 function sendMissingPermitGmailAlert(txNo, baseNo, district, supervisor, office, startWin) {
-  const targetEmail = (authenticatedGmailUser && authenticatedGmailUser.email) ? authenticatedGmailUser.email : "alielgada5@gmail.com";
-  const subject = `تنبيه عاجل: لابد من إصدار رخصة للمعاملة (${txNo}) - أساس (${baseNo}) - ${district}`;
-  const body = `السلام عليكم ورحمة الله وبركاته،
-
-تحية طيبة للمشرف العام: مشرف علي الجدع وفريق (${office})،
-
-تنبيه آلي من منظومة الرخص الذكية (السعودية للطاقة & PDC & الأساس العريض):
-المعاملة رقم (${txNo}) المرتبطة برقم الأساس (${baseNo}) في حي (${district}) والمجدولة بتاريخ (${startWin || 'هذا الأسبوع'}) لا يوجد لها رخصة مضافة على Google Drive حتى الآن.
-
-⚠️ الإجراء الإلزامي: لابد من إصدار رخصة إليها فوراً ورفعها على الدرايف قبل توجه الفرقة الميدانية للموقع.
-• المشرف القائم بالمعاملة: ${supervisor}
-
-مع تحيات منظومة الإدارة الذكية للرخص.`;
-
-  saveStateToDatabase("إرسال تنبيه Gmail لمعاملة بدون رخصة", `معاملة ${txNo} | أساس ${baseNo} | ${district} -> ${targetEmail}`);
-  showToast(`📧 تم إرسال إشعار عاجل على الجيميل (${targetEmail}) للمشرف العام (مشرف علي الجدع): | • 🚨 تنبيه: المعاملة (${txNo} | ${baseNo} - ${district}) لا توجد لها رخصة على الدرايف ولابد من إصدار رخصة إليها قبل موعد العمل (${startWin || 'الأسبوع الحالي'})!`);
+  showToast("لم يُرسل بريد إلكتروني؛ خدمة البريد غير مهيّأة على الخادم.");
 }
 
 function sendBatchMissingPermitsGmailAlert() {
   const missingList = COORD_ITEMS.filter(c => !c.matched_permit_id || c.matched_permit_id === "بدون رخصة مصدرة");
-  const targetEmail = (authenticatedGmailUser && authenticatedGmailUser.email) ? authenticatedGmailUser.email : "alielgada5@gmail.com";
-  saveStateToDatabase("إرسال إشعار Gmail جماعي للمعاملات بدون رخصة", `${missingList.length} معاملة تحتاج إصدار رخصة -> ${targetEmail}`);
-  showToast(`📧 تم إرسال بيان شامل إلى بريد الجيميل (${targetEmail} — مشرف علي الجدع) يضم جميع المعاملات التي لا يوجد لها رخصة على الدرايف وعددها (${missingList.length} معاملة) مع تنبيه: (لابد من إصدار رخصة إليها قبل نزول الفرق الميدانية).`);
+  showToast(`لم يُرسل بريد إلكتروني. توجد ${missingList.length} معاملة بلا رخصة؛ يلزم إعداد خدمة بريد موثوقة قبل الإرسال.`);
 }
 
 function triggerPreExecPermitAlert(baseNo, txNo, sup, startWin) {
-  showToast(`🚨 تم إرسال إنذار استباقي عاجل (قبل 24–48 ساعة من موعد العمل ${startWin}):
-• الموقع/الأساس: ${baseNo} (معاملة ${txNo})
-• المسؤول: ${sup}
-• التعليمات: استخراج/تجديد الرخصة وإرفاقها قبل تحرك الفرقة الميدانية للموقع.`);
+  showToast("لم يُرسل تنبيه بريد/رسالة؛ إعداد قناة التنبيهات غير مكتمل.");
 }
 
 // ============================================================================
@@ -7092,30 +7441,12 @@ function triggerPreExecPermitAlert(baseNo, txNo, sup, startWin) {
 let fourHourRemainingSec = 4 * 3600 - 5;
 
 function startFourHourAiSyncEngine() {
-  setInterval(() => {
-    fourHourRemainingSec -= 1;
-    if (fourHourRemainingSec <= 0) {
-      fourHourRemainingSec = 4 * 3600;
-      runFourHourAiSync(true);
-    }
-    const hrs = String(Math.floor(fourHourRemainingSec / 3600)).padStart(2, "0");
-    const mins = String(Math.floor((fourHourRemainingSec % 3600) / 60)).padStart(2, "0");
-    const secs = String(fourHourRemainingSec % 60).padStart(2, "0");
-    const el = document.getElementById("fourHourCountdown");
-    if (el) el.textContent = `${hrs}:${mins}:${secs}`;
-  }, 1000);
+  const el = document.getElementById("fourHourCountdown");
+  if (el) el.textContent = "غير مفعّل";
 }
 
-function runFourHourAiSync(isAutoCycle) {
-  fourHourRemainingSec = 4 * 3600;
-  renderAllModules();
-  renderPreExecEarlyWarnings();
-  const modeLabel = isAutoCycle ? "تلقائياً (دورة الـ 4 ساعات المجدولة)" : "فوراً عبر وكلاء الذكاء الاصطناعي الـ 14";
-  showToast(`🤖 تم تحديث المنصة ${modeLabel} من مجلدات Google Drive الأربعة:
-• فحص شيت الرخص المنتهية والمعادة وتحديث الحالات
-• فحص مجلد (ملفات الرخص PDF) وربط أي رخصة جديدة
-• فحص (التقرير الوارد من المختبر URS) وجدول التنسيق الأسبوعي (85 معاملة)
-• المزامنة القادمة تلقائياً بعد 4 ساعات.`);
+function runFourHourAiSync() {
+  showToast("لم تُنفّذ المزامنة: ربط Google Drive/Sheets والمصادقة الخادمية غير مهيّأين.");
 }
 
 // ============================================================================
@@ -7123,8 +7454,8 @@ function runFourHourAiSync(isAutoCycle) {
 //    - Browse & Download: 100% Free without login
 //    - Edit / Approve / Add License: Requires Verified Gmail Login
 // ============================================================================
-let isGmailAuthenticated = true;
-let authenticatedGmailUser = { email: "alielgada5@gmail.com", name: "مشرف علي الجدع (مهندس الموقع والمشرف العام)" };
+let isGmailAuthenticated = false;
+let authenticatedGmailUser = null;
 let pendingGmailActionCallback = null;
 
 function requireGmailAuth(actionFn, revertFn) {
@@ -7149,48 +7480,77 @@ function closeGmailAuthModal() {
 }
 
 function sendGmailVerificationCode() {
-  const email = (document.getElementById("gmailEmailInput").value || "").trim();
-  if (!email.toLowerCase().endsWith("@gmail.com")) {
-    showToast("⚠️ يرجى إدخال بريد Gmail صحيح ينتهي بـ @gmail.com لإرسال رمز التأكيد.");
-    return;
-  }
-  const box = document.getElementById("gmailOtpBox");
-  const hint = document.getElementById("gmailOtpHint");
-  if (box) box.style.display = "block";
-  if (hint) hint.textContent = `تم إرسال رمز التأكيد المكون من 6 أرقام إلى (${email}) — رمز التحقق الفوري: 849206`;
-  showToast(`📨 تم إرسال رمز التأكيد (849206) إلى بريد Gmail: ${email}`);
+  showToast("تسجيل الدخول غير مفعّل بعد. يلزم إعداد Google OAuth والتحقق من الجلسة على الخادم؛ لم يُرسل رمز.");
 }
 
 function verifyGmailOtpAndLogin() {
-  const email = (document.getElementById("gmailEmailInput").value || "alielgada5@gmail.com").trim();
-  const name = (document.getElementById("gmailNameInput").value || "مشرف علي الجدع").trim();
-  const otp = (document.getElementById("gmailOtpInput").value || "").trim();
-  if (!otp) {
-    showToast("⚠️ يرجى إدخال رمز التأكيد المرسل إلى Gmail.");
+  pendingGmailActionCallback = null;
+  if (location.protocol === "file:") {
+    showToast("افتح المنصة عبر الخادم: شغّل python main.py ثم افتح http://localhost:8000/app لتسجيل دخول Google.");
     return;
   }
-  isGmailAuthenticated = true;
-  authenticatedGmailUser = { email, name };
-  closeGmailAuthModal();
+  location.assign("/api/auth/google/start");
+}
 
-  const badge = document.getElementById("gmailAuthBadge");
-  if (badge) {
-    badge.style.borderColor = "#00FF86";
-    badge.innerHTML = `<span style="color:#00FF86;">✅ مؤكد عبر Gmail: <strong>${name}</strong> (${email}) — صلاحية التعديل والإضافة مفعلة</span>`;
-  }
-  const btn = document.getElementById("gmailLoginBtn");
-  if (btn) {
-    btn.textContent = `🔓 متصل: ${name}`;
-    btn.onclick = function() {
-      showToast(`أنت مسجل الدخول ومؤكد حالياً بحساب Gmail: ${email} (${name})`);
-    };
-  }
+async function initializeGoogleSession() {
+  if (location.protocol === "file:") return;
+  try {
+    const response = await fetch("/api/auth/me", {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" }
+    });
+    if (!response.ok) throw new Error(`Session check failed (${response.status})`);
+    const session = await response.json();
+    if (session.authenticated && session.role === "super_admin") {
+      isGmailAuthenticated = true;
+      authenticatedGmailUser = {
+        email: session.email,
+        name: session.name
+      };
+      isVisitorMode = false;
+      const badge = document.getElementById("accessModeStatusText");
+      if (badge) badge.textContent = `👑 مشرف عام: ${session.name} (${session.email})`;
+      const loginButton = document.getElementById("gmailLoginBtn");
+      if (loginButton) {
+        loginButton.textContent = "🔓 خروج";
+        loginButton.onclick = logoutGoogleSession;
+      }
+      applyAccessModeUI();
+      const result = new URLSearchParams(location.search).get("auth");
+      if (result === "master") showToast("تم التحقق من حساب Google وتفعيل صلاحية المشرف العام.");
+      return;
+    }
 
-  showToast(`✅ تم تسجيل الدخول والتأكيد عبر Gmail بنجاح (${name} - ${email}). جميع صلاحيات التعديل والإضافة مفعلة الآن!`);
-  if (typeof pendingGmailActionCallback === "function") {
-    const fn = pendingGmailActionCallback;
-    pendingGmailActionCallback = null;
-    fn();
+    isGmailAuthenticated = false;
+    authenticatedGmailUser = null;
+    isVisitorMode = true;
+    applyAccessModeUI();
+    const result = new URLSearchParams(location.search).get("auth");
+    if (result === "viewer") {
+      showToast("تم تسجيل دخول Google بوضع القراءة فقط؛ هذا الحساب غير مضاف إلى قائمة المشرف العام.");
+    }
+  } catch (error) {
+    isGmailAuthenticated = false;
+    authenticatedGmailUser = null;
+    isVisitorMode = true;
+    applyAccessModeUI();
+    const status = document.getElementById("accessModeStatusText");
+    if (status) status.textContent = "👁️ زائر — تعذر التحقق من جلسة الخادم";
+    console.error("Google session verification failed:", error);
+  }
+}
+
+async function logoutGoogleSession() {
+  try {
+    const response = await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "same-origin"
+    });
+    if (!response.ok) throw new Error(`Logout failed (${response.status})`);
+    location.assign("/app");
+  } catch (error) {
+    showToast("تعذر إنهاء جلسة Google؛ أعد المحاولة أو أغلق المتصفح.");
+    console.error("Google logout failed:", error);
   }
 }
 
@@ -7202,6 +7562,10 @@ function openAddPermitModal() {
 }
 
 function submitNewPermitRecord() {
+  if (!isGmailAuthenticated || !authenticatedGmailUser) {
+    showToast("لم تتم الإضافة: يلزم تسجيل دخول موثوق من الخادم أولاً.");
+    return;
+  }
   const pid = (document.getElementById("newPermitId").value || "").trim() || String(2403500 + PERMITS_DB.length);
   const baseNo = (document.getElementById("newPermitBase").value || "").trim() || "R6985";
   const schemeNo = (document.getElementById("newPermitScheme").value || "").trim() || "261225001";
@@ -7277,7 +7641,7 @@ function submitNewPermitRecord() {
   renderAllModules();
   renderPreExecEarlyWarnings();
   saveStateToDatabase("رفع وإضافة رخصة ومعاملة جديدة", `رخصة ${pid} | أساس ${baseNo} | مكتب ${office}`);
-  showToast(`✅ تمت إضافة الرخصة (${pid} | ${baseNo}) بنجاح وتوثيقها بحساب Gmail (${authenticatedGmailUser.email}) ومزامنتها مع جدول التنسيق!`);
+  showToast(`تمت إضافة الرخصة (${pid} | ${baseNo}) محلياً في هذا المتصفح. لم تُرفع إلى قاعدة بيانات أو Google Sheets.`);
 }
 
 
@@ -7917,7 +8281,7 @@ gemini-api agent run --agent antigravity-preview-09-2026 --env remote \
 
 // 1. VISITOR MODE VS APPROVED ACCESS GATE (منظومة الدخول ووضع الزائر)
 // ============================================================================
-let isVisitorMode = false;
+let isVisitorMode = true;
 // Views allowed in Visitor Mode (المنصات التي تعمل أو تحت التنفيذ + الدعم الفني فقط)
 const VISITOR_ALLOWED_VIEWS = ["dashboard", "licenses", "coordination", "support"];
 
@@ -7927,17 +8291,6 @@ function openAccessGateModal() {
 }
 
 function applyAccessModeUI() {
-  // إخفاء أو إظهار زر إعداد مفاتيح Google Studio API بحيث يظهر للمشرف فقط
-  const studioKeyBtn = document.getElementById("btnStudioApiConfigToggle");
-  const studioBox = document.getElementById("studioApiConfigBox");
-  const isSupervisor = isUserAuthorizedSupervisor();
-  if (studioKeyBtn) {
-    studioKeyBtn.style.display = isSupervisor ? "inline-flex" : "none";
-  }
-  if (studioBox && !isSupervisor) {
-    studioBox.style.display = "none";
-  }
-
   const banner = document.getElementById("visitorModeActiveBanner");
   const statusTxt = document.getElementById("accessModeStatusText");
   const visBtn = document.getElementById("visitorModeToggleBtn");
@@ -7948,7 +8301,9 @@ function applyAccessModeUI() {
   if (statusTxt) {
     statusTxt.textContent = isVisitorMode
       ? "👁️ وضع الزائر (العاملة وتحت التنفيذ فقط)"
-      : "🔓 دخول معتمد (كامل الصلاحيات — مشرف علي الجدع)";
+      : authenticatedGmailUser
+        ? `👑 المشرف العام: ${authenticatedGmailUser.name}`
+        : "🔒 جلسة موثقة";
   }
   if (visBtn) {
     visBtn.textContent = isVisitorMode ? "🔓 طلب فتح كامل المنصة" : "👁️ تجربة وضع الزائر";
@@ -8002,17 +8357,6 @@ switchView = function(vKey) {
     return;
   }
   _origSwitchView(vKey);
-};
-
-// Also ensure verifyAndLoginGmail unlocks full platform
-const _origVerifyLogin = verifyGmailOtpAndLogin;
-verifyGmailOtpAndLogin = function() {
-  isVisitorMode = false;
-  if (typeof _origVerifyLogin === "function") {
-    _origVerifyLogin();
-  }
-  applyAccessModeUI();
-  showToast("✅ تم تفعيل الدخول المعتمد بموافقة المشرف علي الجدع وفتح جميع أقسام المنصة الـ 15!");
 };
 
 // ============================================================================
@@ -8077,46 +8421,8 @@ function speakSupportContactEgyptian() {
 }
 
 // ============================================================================
-// 3. GOOGLE AI STUDIO API FAST SEARCH, COMPARISON & ON-DEMAND SHEET GENERATOR
+// 3. LOCAL RULE-BASED SEARCH & ON-DEMAND SHEET GENERATOR
 // ============================================================================
-function isUserAuthorizedSupervisor() {
-  if (isVisitorMode) return false;
-  if (!isGmailAuthenticated) return false;
-  const email = (authenticatedGmailUser && authenticatedGmailUser.email ? authenticatedGmailUser.email : "").toLowerCase();
-  const name = (authenticatedGmailUser && authenticatedGmailUser.name ? authenticatedGmailUser.name : "");
-  // Authorized supervisor: المشرف علي الجدع or supervisor email alielgada5@gmail.com
-  return email === "alielgada5@gmail.com" || name.includes("الجدع") || name.includes("مشرف");
-}
-
-function toggleStudioApiConfigBox() {
-  // إتاحة وإظهار ربط وإعداد مفاتيح Google AI Studio API للمشرف فقط
-  if (!isUserAuthorizedSupervisor()) {
-    openAccessGateModal();
-    showToast("🔒 خاصية ربط وإعداد مفاتيح Google AI Studio API متاحة للمشرف فقط (المشرف علي الجدع). يرجى تسجيل الدخول أو طلب الموافقة عبر الواتساب (0597778853).");
-    return;
-  }
-  const b = document.getElementById("studioApiConfigBox");
-  if (!b) return;
-  b.style.display = b.style.display === "none" ? "block" : "none";
-  if (b.style.display === "block") {
-    showToast("🔑 تم فتح إعدادات مفاتيح Google AI Studio API المخصصة للمشرف.");
-  }
-}
-
-function saveGoogleStudioApiSettings() {
-  const key = (document.getElementById("googleStudioApiKeyInput").value || "").trim();
-  const model = document.getElementById("googleStudioFastModelSelect").value;
-  try {
-    localStorage.setItem("SAUDI_ENERGY_GOOGLE_STUDIO_API_KEY", key);
-    localStorage.setItem("SAUDI_ENERGY_GOOGLE_STUDIO_MODEL", model);
-  } catch (e) {}
-  const badge = document.getElementById("studioApiStatusBadge");
-  if (badge) {
-    badge.textContent = `Google AI Studio (${model}): مفعل وسريع ✓`;
-  }
-  showToast(`🔑 تم حفظ وتفعيل مفتاح Google AI Studio API على النموذج (${model}) لسرعة البحث والمقارنة وإصدار الشيتات!`);
-}
-
 function runEgyptianAiFastSearchAndSheet() {
   const q = (document.getElementById("egyptianAiFastQueryInput").value || "").trim();
   const outBox = document.getElementById("egyptianAiFastResultBox");
@@ -8149,7 +8455,7 @@ function runEgyptianAiFastSearchAndSheet() {
   const closedCnt = PERMITS_DB.filter(r => r.category === "مغلقة (تم الإغلاق)").length;
   const elapsedMs = Math.max(12, Math.round(performance.now() - t0));
 
-  const egReply = `تمام يا باشمهندس، بحثتلك في قاعدة البيانات في ${elapsedMs} مللي ثانية باستخدام محرك جوجل ستوديو. لقيت ${matchedPermits.length} سجل مطابق. وبخصوص المقارنة السريعة: عندنا ${activeCnt} رخصة شغالة وتحت التنفيذ، مقابل ${ripcCnt} معاد من المركز و ${consCnt} معاد من الاستشاري، و ${expCnt} منتهية تحت المعالجة، و ${closedCnt} رخصة اتقفلت نهائي. تقدر تدوس على زرار تنزيل الشيت عشان يتحمل معاك فوراً.`;
+  const egReply = `تمام يا باشمهندس، بحثتلك محلياً في قاعدة البيانات في ${elapsedMs} مللي ثانية باستخدام قواعد واضحة. لقيت ${matchedPermits.length} سجل مطابق. وبخصوص المقارنة السريعة: عندنا ${activeCnt} رخصة شغالة وتحت التنفيذ، مقابل ${ripcCnt} معاد من المركز و ${consCnt} معاد من الاستشاري، و ${expCnt} منتهية تحت المعالجة، و ${closedCnt} رخصة اتقفلت نهائي. تقدر تدوس على زرار تنزيل الشيت عشان يتحمل معاك فوراً.`;
 
   speakInEgyptianMaleAccent(egReply);
 
@@ -8157,7 +8463,7 @@ function runEgyptianAiFastSearchAndSheet() {
     outBox.style.display = "block";
     outBox.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-        <strong style="color:#0F6CBD;">⚡ نتيجة البحث والمقارنة الفائقة (Google AI Studio — زمن الاستجابة: ${elapsedMs}ms)</strong>
+        <strong style="color:#0F6CBD;">⚡ نتيجة البحث المحلي القائم على القواعد — زمن الاستجابة: ${elapsedMs}ms</strong>
         <div style="display:flex;gap:6px;">
           <button type="button" class="btn btn-sm btn-primary" onclick="downloadCustomFilteredCsv('${q.replace(/'/g, "")}')">📥 تنزيل شيت النتائج (Excel / CSV) الآن</button>
           <button type="button" class="btn btn-sm" onclick="window.print()">🖨️ إصدار تقرير PDF</button>
@@ -8284,7 +8590,7 @@ function showGeminiCliAndSdkCode() {
   runTxSkillCliCommandGenerator();
 }
 
-window.addEventListener("DOMContentLoaded", function() { initApp(); if (typeof applyAccessModeUI === "function") applyAccessModeUI(); });
+window.addEventListener("DOMContentLoaded", function() { initApp(); if (typeof applyAccessModeUI === "function") applyAccessModeUI(); initializeGoogleSession(); });
 </script>
 
 <!-- منظومة الدخول للمنصة: وضع الزائر (للمنصات والرخص العاملة وتحت التنفيذ فقط) مقابل الدخول الكامل بموافقة المشرف علي الجدع -->
@@ -8292,14 +8598,14 @@ window.addEventListener("DOMContentLoaded", function() { initApp(); if (typeof a
   <div class="card" style="max-width:580px;width:100%;margin:0;border:1px solid #D1D1D1;background:#FFFFFF;">
     <div class="card-header">
       <div class="card-title" style="color:#242424;display:flex;align-items:center;gap:8px;">
-        <span>🔐 منظومة الدخول إلى المنصة والصلاحيات (وضع الزائر / موافقة المشرف علي الجدع)</span>
+        <span>🔐 الدخول بحساب Google وصلاحية المشرف</span>
       </div>
       <button class="btn btn-sm" onclick="closeGmailAuthModal()">✕ إغلاق</button>
     </div>
 
     <div style="font-size:12px;color:#424242;margin-bottom:12px;line-height:1.65;background:#F8FAFC;padding:10px 12px;border-radius:6px;border:1px solid #E5E7EB;">
       • <strong>👁️ وضع الزائر (متاح بدون تسجيل دخول):</strong> يتيح رؤية <strong>المنصات والرخص التي تعمل (السارية) أو التي تحت التنفيذ فقط</strong> وتنزيل رخصها.<br>
-      • <strong>🔓 الدخول الكامل لباقي أقسام المنصة والتعديل وإصدار الشيتات:</strong> يتوجب <strong>تسجيل الدخول وموافقة المشرف علي الجدع</strong> من خلال الإيميل المرفق في الدعم الفني (<code>alielgada5@gmail.com</code>) أو التواصل عبر الواتساب (<code>0597778853</code>).
+      • <strong>🔓 صلاحية المشرف العام:</strong> لحساب Google المحدد في <code>GOOGLE_MASTER_ADMIN_EMAIL</code> فقط بعد التحقق من الخادم. بقية الحسابات بوضع القراءة.
     </div>
 
     <!-- أزرار اختيار سريع لوضع التصفح -->
@@ -8309,48 +8615,15 @@ window.addEventListener("DOMContentLoaded", function() { initApp(); if (typeof a
         <span style="font-size:10.5px;color:#78350F;">رؤية المنصات والرخص التي تعمل أو تحت التنفيذ فقط</span>
       </button>
       <button type="button" class="btn" style="padding:10px;text-align:right;display:flex;flex-direction:column;gap:3px;border:1px solid #0F6CBD;background:#EFF6FF;" onclick="verifyGmailOtpAndLogin()">
-        <strong style="color:#0F6CBD;font-size:12.5px;">🔓 دخول معتمد (بموافقة مشرف علي الجدع)</strong>
-        <span style="font-size:10.5px;color:#1E3A8A;">فتح كافة أقسام المنصة والتعديل وإصدار جميع الشيتات</span>
+        <strong style="color:#0F6CBD;font-size:12.5px;">🔐 المتابعة بحساب Google</strong>
+        <span style="font-size:10.5px;color:#1E3A8A;">التحقق يتم على الخادم ولا يُقبل رمز ثابت</span>
       </button>
     </div>
 
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <div>
-        <label style="font-size:11.5px;font-weight:700;color:#242424;">البريد الإلكتروني (Gmail) لطالب الدخول:</label>
-        <input type="email" id="gmailEmailInput" class="input-ctrl mono" placeholder="example@gmail.com" value="alielgada5@gmail.com" style="margin-top:4px;">
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div>
-          <label style="font-size:11.5px;font-weight:700;color:#242424;">اسم المهندس / المشرف:</label>
-          <input type="text" id="gmailNameInput" class="input-ctrl" value="مشرف علي الجدع" style="margin-top:4px;">
-        </div>
-        <div>
-          <label style="font-size:11.5px;font-weight:700;color:#242424;">كود موافقة المشرف علي الجدع:</label>
-          <div id="gmailOtpBox" style="margin-top:4px;"><span id="gmailOtpHint" style="display:none;"></span><input type="text" id="gmailOtpInput" class="input-ctrl mono" value="849206" placeholder="كود موافقة مشرف علي الجدع"></div>
-        </div>
-      </div>
-
-      <!-- قنوات التواصل المباشر مع المشرف علي الجدع لطلب الموافقة -->
-      <div style="padding:10px 12px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;">
-        <div style="font-size:11.5px;font-weight:800;color:#242424;margin-bottom:6px;">
-          📞 لطلب الموافقة وتفعيل الدخول من المشرف علي الجدع (0597778853):
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <a href="https://wa.me/966597778853?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%20%D9%85%D8%B4%D8%B1%D9%81%20%D8%B9%D9%84%D9%8A%20%D8%A7%D9%84%D8%AC%D8%AF%D8%B9%D8%8C%20%D8%A3%D8%B1%D8%AC%D9%88%20%D8%A7%D9%84%D9%85%D9%88%D8%A7%D9%81%D9%82%D8%A9%20%D8%B9%D9%84%D9%89%20%D8%AF%D8%AE%D9%88%D9%84%D9%8A%20%D9%84%D9%84%D9%85%D9%86%D8%B5%D8%A9" target="_blank" class="btn btn-sm" style="background:#25D366;color:#FFFFFF;border-color:#16A34A;text-decoration:none;">
-            💬 طلب موافقة عبر واتساب (0597778853)
-          </a>
-          <a href="https://t.me/+966597778853" target="_blank" class="btn btn-sm" style="background:#0088CC;color:#FFFFFF;border-color:#0284C7;text-decoration:none;">
-            ✈️ طلب عبر تيليجرام
-          </a>
-          <a href="mailto:alielgada5@gmail.com?subject=%D8%B7%D9%84%D8%A8%20%D9%85%D9%88%D8%A7%D9%81%D9%82%D8%A9%20%D8%AF%D8%AE%D9%88%D9%84%20%D9%84%D9%84%D9%85%D9%86%D8%B5%D8%A9" class="btn btn-sm" style="text-decoration:none;">
-            ✉️ طلب عبر الإيميل (alielgada5@gmail.com)
-          </a>
-        </div>
-      </div>
-
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
         <button class="btn btn-sm" onclick="activateVisitorModeOnly()">👁️ المتابعة كزائر (العاملة وتحت التنفيذ فقط)</button>
-        <button class="btn btn-sm btn-primary" onclick="verifyGmailOtpAndLogin()">✅ تأكيد الدخول والموافقة المعتمدة</button>
+        <button class="btn btn-sm btn-primary" onclick="verifyGmailOtpAndLogin()">🔐 تسجيل الدخول بحساب Google</button>
       </div>
     </div>
   </div>

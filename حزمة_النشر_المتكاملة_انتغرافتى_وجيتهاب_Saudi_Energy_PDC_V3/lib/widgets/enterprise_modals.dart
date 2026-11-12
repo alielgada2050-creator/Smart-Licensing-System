@@ -390,7 +390,7 @@ class _License13TabsDialogState extends State<_License13TabsDialog> {
 void showAccessGateModal(BuildContext context, EnterpriseController ctrl) {
   final emailCtrl = TextEditingController(text: ctrl.loggedInEmail);
   final nameCtrl = TextEditingController(text: ctrl.loggedInName);
-  final otpCtrl = TextEditingController(text: '849206');
+  final otpCtrl = TextEditingController();
 
   showDialog(
     context: context,
@@ -431,7 +431,7 @@ void showAccessGateModal(BuildContext context, EnterpriseController ctrl) {
                   ),
                   child: const Text(
                     '• 👁️ وضع الزائر (متاح بدون تسجيل دخول): يتيح رؤية المنصات والرخص التي تعمل (السارية) أو التي تحت التنفيذ فقط وتنزيل رخصها.\n'
-                    '• 🔓 الدخول الكامل لباقي أقسام المنصة والتعديل وإصدار الشيتات: يتوجب تسجيل الدخول وموافقة المشرف علي الجدع من خلال الإيميل المرفق في الدعم الفني (alielgada5@gmail.com) أو التواصل عبر الواتساب (0597778853).',
+                    '• 🔓 تسجيل الدخول غير مفعّل حتى إعداد Google OAuth والتحقق الخادمي. لا تمنح هذه الشاشة صلاحية اعتماد أو تعديل.',
                     style: TextStyle(fontSize: 12, height: 1.6),
                   ),
                 ),
@@ -475,11 +475,21 @@ void showAccessGateModal(BuildContext context, EnterpriseController ctrl) {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         onPressed: () {
-                          ctrl.authenticateSupervisorOrEngineer(
+                          final authenticated = ctrl.authenticateSupervisorOrEngineer(
                             email: emailCtrl.text,
                             name: nameCtrl.text,
                             otpCode: otpCtrl.text,
                           );
+                          if (!authenticated) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'تسجيل الدخول غير مفعّل: يلزم إعداد Google OAuth والتحقق الخادمي أولاً.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
                           Navigator.of(ctx).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -491,7 +501,7 @@ void showAccessGateModal(BuildContext context, EnterpriseController ctrl) {
                         },
                         icon: const Icon(Icons.lock_open),
                         label: const Text(
-                          'دخول معتمد (كامل المنصة)',
+                          'دخول Google (غير مفعّل)',
                           style: TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),

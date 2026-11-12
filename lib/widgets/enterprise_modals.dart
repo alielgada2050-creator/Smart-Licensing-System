@@ -40,7 +40,7 @@ class _License13TabsDialogState extends State<_License13TabsDialog> {
     '4. التنسيقات الأسبوعية',
     '5. التنفيذ الميداني',
     '6. التجديد والمدد',
-    '7. المختبر URS (60 يوم)',
+    '7. تقرير المختبر URS',
     '8. الاستشاري الهندسي',
     '9. المركز RIPC',
     '10. الجهة المالكة SEC',
@@ -52,7 +52,7 @@ class _License13TabsDialogState extends State<_License13TabsDialog> {
   @override
   Widget build(BuildContext context) {
     final r = widget.permit;
-    final sla = r.calculateSla();
+    final sla = widget.ctrl.calculatePermitSla(r);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -253,19 +253,42 @@ class _License13TabsDialogState extends State<_License13TabsDialog> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0xFFCBD5E1)),
         ),
-        child: SelectableText(
-          '📁 License_${r.permitId} (${r.baseNo})\n'
-          '├── 📂 01_Original_License (مستند الرخصة الأصلي محفوظ ولا يُحذف)\n'
-          '├── 📂 02_Renewals (سجل ومستندات التجديد)\n'
-          '├── 📂 03_Approvals (خطاب التعهد + خطاب SEC + شركة السفلتة المؤهلة للشوارع المحظورة)\n'
-          '├── 📂 04_Consultant_Comments (ملاحظات الاستشاري: ${r.consultant})\n'
-          '├── 📂 05_Center_Comments (ملاحظات مركز مشاريع البنية التحتية RIPC)\n'
-          '├── 📂 06_URS_Reports (تقرير مختبر URS: ${r.ursResult})\n'
-          '├── 📂 07_Execution_Photos (صور الحفر وتمديد الكابلات: ${r.photosUploaded})\n'
-          '├── 📂 08_Correction_Evidence (إثبات معالجة الملاحظات قبل/بعد السفلتة)\n'
-          '├── 📂 09_Closure_Documents (مسوغات الإغلاق الأولي)\n'
-          '└── 📂 10_Final_Closure (شهادة الإغلاق النهائي المعتمدة وربط المستخلص في أودو)',
-          style: const TextStyle(height: 1.9, fontSize: 13, fontWeight: FontWeight.w600),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SelectableText(
+              '📁 License_${r.permitId} (${r.baseNo})\n'
+              '├── 📂 01_Original_License (مستند الرخصة الأصلي محفوظ ولا يُحذف)\n'
+              '├── 📂 02_Renewals (سجل ومستندات التجديد)\n'
+              '├── 📂 03_Approvals (خطاب التعهد + خطاب SEC + شركة السفلتة المؤهلة للشوارع المحظورة)\n'
+              '├── 📂 04_Consultant_Comments (ملاحظات الاستشاري: ${r.consultant})\n'
+              '├── 📂 05_Center_Comments (ملاحظات مركز مشاريع البنية التحتية RIPC)\n'
+              '├── 📂 06_URS_Reports (تقرير مختبر URS: ${r.ursResult})\n'
+              '├── 📂 07_Execution_Photos (صور الحفر وتمديد الكابلات: ${r.photosUploaded})\n'
+              '├── 📂 08_Correction_Evidence (إثبات معالجة الملاحظات قبل/بعد السفلتة)\n'
+              '├── 📂 09_Closure_Documents (مسوغات الإغلاق الأولي)\n'
+              '└── 📂 10_Final_Closure (شهادة الإغلاق النهائي المعتمدة وربط المستخلص في أودو)',
+              style: const TextStyle(
+                height: 1.9,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.lock_outline),
+                title: const Text('رفع المرفقات إلى مجلد الرخصة في Google Drive'),
+                subtitle: const Text(
+                  'تم تجهيز مخطط المرفقات. الرفع معطّل مؤقتاً حتى اعتماد مزود المصادقة وربط هوية المستخدم بنطاق صلاحياته. لا يُحفظ الملف أو يُرسل حالياً.',
+                ),
+                trailing: const FilledButton(
+                  onPressed: null,
+                  child: Text('الرفع غير مفعّل'),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     } else if (_activeTab == 3) {
@@ -278,7 +301,7 @@ class _License13TabsDialogState extends State<_License13TabsDialog> {
         '6. إصدار الرخصة (${r.issueDate}) ✓',
         '7. تفعيل الرخصة ✓',
         '8. الحالة الحالية: ${r.category}',
-        '9. فحص مختبر URS (مهلة 60 يوماً)',
+        '9. فحص مختبر URS والمهلة',
         '10. مطابقة الاستشاري الهندسي',
         '11. مطابقة مركز المشاريع RIPC',
         '12. اعتماد الجهة المالكة SEC',
@@ -331,13 +354,13 @@ class _License13TabsDialogState extends State<_License13TabsDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '7. إدارة تقرير المختبر URS ومهلة الـ 60 يوماً (بإشراف المشرف علي الجدع)',
+            '7. إدارة تقرير المختبر URS والمهلة (بإشراف المشرف علي الجدع)',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
           _infoRow('تاريخ انتهاء الرخصة الأصلي:', '${sla.endStr} (محفوظ ولا يُستبدل عند التحديث)'),
           _infoRow('تاريخ بداية مهلة المختبر:', sla.endStr),
-          _infoRow('آخر موعد مسموح لرفع تقرير المختبر (+60 يوماً):', sla.labDeadlineStr),
+          _infoRow('آخر موعد مسموح لرفع تقرير المختبر:', sla.labDeadlineStr),
           _infoRow('الأيام المتبقية للمختبر:', sla.slaLabel),
           _infoRow('حالة ونتيجة تقرير المختبر URS:', r.ursResult),
           _infoRow('المشرف المسؤول عن سلة المختبر:', 'مشرف علي الجدع (0597778853)'),
@@ -388,10 +411,6 @@ class _License13TabsDialogState extends State<_License13TabsDialog> {
 }
 
 void showAccessGateModal(BuildContext context, EnterpriseController ctrl) {
-  final emailCtrl = TextEditingController(text: ctrl.loggedInEmail);
-  final nameCtrl = TextEditingController(text: ctrl.loggedInName);
-  final otpCtrl = TextEditingController(text: '849206');
-
   showDialog(
     context: context,
     builder: (ctx) => Directionality(
@@ -411,7 +430,7 @@ void showAccessGateModal(BuildContext context, EnterpriseController ctrl) {
                   children: [
                     const Expanded(
                       child: Text(
-                        '🔐 منظومة الدخول إلى المنصة والصلاحيات (وضع الزائر / موافقة المشرف علي الجدع)',
+                        '🔐 الدخول إلى المنصة والصلاحيات',
                         style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -430,16 +449,13 @@ void showAccessGateModal(BuildContext context, EnterpriseController ctrl) {
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: const Text(
-                    '• 👁️ وضع الزائر (متاح بدون تسجيل دخول): يتيح رؤية المنصات والرخص التي تعمل (السارية) أو التي تحت التنفيذ فقط وتنزيل رخصها.\n'
-                    '• 🔓 الدخول الكامل لباقي أقسام المنصة والتعديل وإصدار الشيتات: يتوجب تسجيل الدخول وموافقة المشرف علي الجدع من خلال الإيميل المرفق في الدعم الفني (alielgada5@gmail.com) أو التواصل عبر الواتساب (0597778853).',
+                    '• وضع الزائر للقراءة متاح.\n'
+                    '• تسجيل الدخول والصلاحيات الفعلية لم تُفعّل بعد؛ يجري اعتماد مزود المصادقة وربط الحسابات بنطاقات الرخص. لن يُمنح وصول كامل باستخدام بريد أو رمز ثابت.',
                     style: TextStyle(fontSize: 12, height: 1.6),
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
+                OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           backgroundColor: const Color(0xFFFFFBEB),
                           side: const BorderSide(color: Color(0xFFF59E0B)),
@@ -464,68 +480,6 @@ void showAccessGateModal(BuildContext context, EnterpriseController ctrl) {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: FluentEnterpriseTheme.fluentBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onPressed: () {
-                          ctrl.authenticateSupervisorOrEngineer(
-                            email: emailCtrl.text,
-                            name: nameCtrl.text,
-                            otpCode: otpCtrl.text,
-                          );
-                          Navigator.of(ctx).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                '✅ تم تفعيل الدخول المعتمد بموافقة المشرف علي الجدع وفتح جميع أقسام المنصة!',
-                              ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.lock_open),
-                        label: const Text(
-                          'دخول معتمد (كامل المنصة)',
-                          style: TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: emailCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'البريد الإلكتروني (Gmail) لطالب الدخول',
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: nameCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'اسم المهندس / المشرف',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: otpCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'كود موافقة المشرف علي الجدع',
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
                 const SizedBox(height: 14),
                 Container(

@@ -44,8 +44,8 @@ class PermitRecord {
     this.digType = 'حفر مفتوح',
     this.consultant = 'شركة التصميم الفني للاستشارات الهندسية',
     this.lab = 'شركة يو أر أس العربية السعودية',
-    this.issueDate = '2026-10-15',
-    this.endDate = '2026-11-20',
+    this.issueDate = '',
+    this.endDate = '',
     this.consProcDate = '',
     this.centerProcDate = '',
     this.refDateFor60 = '',
@@ -78,8 +78,8 @@ class PermitRecord {
       digType: s('dig_type', 'حفر مفتوح'),
       consultant: s('consultant', 'شركة التصميم الفني للاستشارات الهندسية'),
       lab: s('lab', 'شركة يو أر أس العربية السعودية'),
-      issueDate: s('issue_date', '2026-10-15'),
-      endDate: s('end_date', '2026-11-15'),
+      issueDate: s('issue_date'),
+      endDate: s('end_date'),
       consProcDate: s('cons_proc_date'),
       centerProcDate: s('center_proc_date'),
       refDateFor60: s('ref_date_for_60'),
@@ -136,41 +136,55 @@ class PermitRecord {
   bool get isActiveOrInExecution =>
       category.contains('سارية') || category.contains('فعالة');
 
-  PermitSlaInfo calculateSla([DateTime? referenceToday]) {
-    final today = referenceToday ?? DateTime(2026, 11, 8);
-    String rawEnd = endDate.isNotEmpty
-        ? endDate
-        : (refDateFor60.isNotEmpty
-            ? refDateFor60
-            : (centerProcDate.isNotEmpty ? centerProcDate : '2026-10-15'));
-    if (rawEnd.length > 10) rawEnd = rawEnd.substring(0, 10);
-
-    DateTime endDt = DateTime.tryParse(rawEnd) ?? DateTime(2026, 10, 15);
-    int validDaysLeft = endDt.difference(today).inDays;
-
-    // Rule Section 8: تاريخ انتهاء الرخصة + 60 يوماً = آخر موعد لرفع تقرير المختبر
-    DateTime labDeadlineDt = endDt.add(const Duration(days: 60));
-    String labDeadlineStr =
-        '${labDeadlineDt.year.toString().padLeft(4, '0')}-${labDeadlineDt.month.toString().padLeft(2, '0')}-${labDeadlineDt.day.toString().padLeft(2, '0')}';
-    int labDaysLeft = labDeadlineDt.difference(today).inDays;
-
-    String slaTier = 'safe';
-    String slaLabel = '$labDaysLeft يوم متبقي';
-
+  PermitSlaInfo calculateSla({
+    required int? ursGraceDays,
+    required int? nearDeadlineDays,
+    DateTime? referenceToday,
+  }) {
+    final today = referenceToday ?? DateTime.now();
+    final rawEnd = endDate.length > 10 ? endDate.substring(0, 10) : endDate;
+    final endDt = DateTime.tryParse(rawEnd);
+    final validDaysLeft = endDt == null
+        ? null
+        : DateTime(endDt.year, endDt.month, endDt.day)
+            .difference(DateTime(today.year, today.month, today.day))
+            .inDays;
     if (category == 'مغلقة (تم الإغلاق)') {
-      slaTier = 'done';
-      slaLabel = 'مغلقة نهائياً';
-    } else if (labDaysLeft < 0) {
-      slaTier = 'overdue';
-      slaLabel = 'تجاوز 60 يوم (${labDaysLeft.abs()}-)';
-    } else if (labDaysLeft <= 15) {
-      slaTier = 'crit';
-      slaLabel = 'حرج ≤15 يوم ($labDaysLeft)';
-    } else if (labDaysLeft <= 30) {
-      slaTier = 'warn';
-      slaLabel = 'تنبيه ≤30 يوم ($labDaysLeft)';
+      return PermitSlaInfo(
+        endStr: rawEnd,
+        validDaysLeft: validDaysLeft,
+        labDeadlineStr: '',
+        labDaysLeft: null,
+        slaTier: 'done',
+        slaLabel: 'مغلقة نهائياً',
+      );
     }
-
+    if (endDt == null || ursGraceDays == null || nearDeadlineDays == null) {
+      return PermitSlaInfo(
+        endStr: rawEnd,
+        validDaysLeft: validDaysLeft,
+        labDeadlineStr: '',
+        labDaysLeft: null,
+        slaTier: 'pending',
+        slaLabel: 'إعدادات المهلة أو تاريخ الانتهاء غير متاح',
+      );
+    }
+    final endDateOnly = DateTime(endDt.year, endDt.month, endDt.day);
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    final labDeadlineDt = endDateOnly.add(Duration(days: ursGraceDays));
+    final labDaysLeft = labDeadlineDt.difference(todayOnly).inDays;
+    final labDeadlineStr =
+        '${labDeadlineDt.year.toString().padLeft(4, '0')}-${labDeadlineDt.month.toString().padLeft(2, '0')}-${labDeadlineDt.day.toString().padLeft(2, '0')}';
+    final slaTier = labDaysLeft < 0
+        ? 'overdue'
+        : labDaysLeft <= nearDeadlineDays
+            ? 'near'
+            : 'safe';
+    final slaLabel = labDaysLeft < 0
+        ? 'متأخر ${labDaysLeft.abs()} يوم'
+        : labDaysLeft <= nearDeadlineDays
+            ? 'قريب من الاستحقاق: $labDaysLeft يوم'
+            : '$labDaysLeft يوم متبقٍ';
     return PermitSlaInfo(
       endStr: rawEnd,
       validDaysLeft: validDaysLeft,
@@ -184,10 +198,10 @@ class PermitRecord {
 
 class PermitSlaInfo {
   final String endStr;
-  final int validDaysLeft;
+  final int? validDaysLeft;
   final String labDeadlineStr;
-  final int labDaysLeft;
-  final String slaTier; // done, safe, warn, crit, overdue
+  final int? labDaysLeft;
+  final String slaTier;
   final String slaLabel;
 
   const PermitSlaInfo({
@@ -213,7 +227,7 @@ class CoordinationItem {
   String requestStatusInTable;
   String notes;
   String digLengthLabel;
-  double lengthM;
+  double? lengthM;
   String expectedStart;
   String fieldMonitor;
   String assignedSupervisor;
@@ -242,7 +256,7 @@ class CoordinationItem {
     this.requestStatusInTable = 'تم اصدار الرخصة',
     this.notes = '',
     this.digLengthLabel = '100m',
-    this.lengthM = 100.0,
+    this.lengthM,
     this.expectedStart = 'الإثنين 09-11-2026',
     this.fieldMonitor = 'SHAHIN',
     this.assignedSupervisor = 'مشرف علي الجدع (مشرف الرخص والمختبر وإغلاق المعاملات)',
@@ -275,13 +289,13 @@ class CoordinationItem {
       requestStatusInTable: s('request_status_in_table'),
       notes: s('notes'),
       digLengthLabel: s('dig_length_label', '100m'),
-      lengthM: double.tryParse(s('length_m', '100')) ?? 100.0,
+      lengthM: double.tryParse(s('length_m')),
       expectedStart: s('expected_start', 'الإثنين 09-11-2026'),
       fieldMonitor: s('field_monitor', 'SHAHIN'),
       assignedSupervisor: s('assigned_supervisor', 'مشرف علي الجدع'),
       matchedPermitId: s('matched_permit_id', 'بدون رخصة مصدرة'),
       matchedPermitCategory: s('matched_permit_category'),
-      matchedPermitEndDate: s('matched_permit_end_date', '2026-11-20'),
+      matchedPermitEndDate: s('matched_permit_end_date'),
       comparisonVerdict: s('comparison_verdict'),
       approvalDecision: s('approval_decision', 'معتمدة للتنفيذ الفوري ✅'),
       priorityTier: s('priority_tier', 'P1 - جاهزة للتنفيذ الفوري'),
@@ -403,11 +417,11 @@ class PdfOcrLicenseRecord {
   final String category;
   final String startDate;
   final String endDate;
-  final int durationDays;
+  final int? durationDays;
   final String digMethod;
-  final double lengthM;
-  final double depthM;
-  final double widthM;
+  final double? lengthM;
+  final double? depthM;
+  final double? widthM;
   final String district;
   final String roadBanStatus;
   final String fileName;
@@ -456,11 +470,11 @@ class PdfOcrLicenseRecord {
       category: s('category'),
       startDate: s('start_date'),
       endDate: s('end_date'),
-      durationDays: int.tryParse(s('duration_days', '20')) ?? 20,
+      durationDays: int.tryParse(s('duration_days')),
       digMethod: s('dig_method', 'حفر مفتوح'),
-      lengthM: double.tryParse(s('length_m', '100')) ?? 100.0,
-      depthM: double.tryParse(s('depth_m', '1.2')) ?? 1.2,
-      widthM: double.tryParse(s('width_m', '0.6')) ?? 0.6,
+      lengthM: double.tryParse(s('length_m')),
+      depthM: double.tryParse(s('depth_m')),
+      widthM: double.tryParse(s('width_m')),
       district: s('district'),
       roadBanStatus: s('road_ban_status', 'غير محظور'),
       fileName: s('file_name'),
@@ -730,8 +744,8 @@ const List<AiAgentSpec> kAiAgents15Spec = [
   AiAgentSpec(
     id: 4,
     nameEn: 'Agent 4 – URS Laboratory Agent',
-    nameAr: 'وكيل مختبر URS ومهلة 60 يوماً',
-    description: 'متابعة الفحوصات، النقاط الراسبة (62)، ومهلة 60 يوماً',
+    nameAr: 'وكيل مختبر URS ومتابعة المهل',
+    description: 'متابعة الفحوصات والمهل وفق إعدادات المشرف',
     sampleQuery: 'ما الرخص التي لديها تقرير مختبر راسب؟',
   ),
   AiAgentSpec(
@@ -787,8 +801,8 @@ const List<AiAgentSpec> kAiAgents15Spec = [
     id: 12,
     nameEn: 'Agent 12 – Notification & Escalation Agent',
     nameAr: 'وكيل التنبيهات وتكامل Odoo/WhatsApp',
-    description: 'إرسال تنبيهات 30/15/7/3/1 يوم وإنشاء مهام Odoo',
-    sampleQuery: 'ما الرخص التي تبقى لها أقل من 15 يوماً على مهلة المختبر؟',
+    description: 'إرسال التنبيهات وفق عتبات المهل المعرفة في الإعدادات',
+    sampleQuery: 'ما الرخص ذات المهل القريبة من الاستحقاق؟',
   ),
   AiAgentSpec(
     id: 13,
@@ -808,7 +822,7 @@ const List<String> kStandardReports20 = [
   '6. تقرير المعادة من المركز (295)',
   '7. تقرير الرخص المعتمدة والمرفوعة (29)',
   '8. تقرير معالجة الجهة المالكة SEC',
-  '9. تقرير مهلة المختبر 60 يوماً',
+  '9. تقرير مهلة المختبر',
   '10. تقرير المختبر الناجح والراسب (URS)',
   '11. تقرير الإغلاقات النهائية (38)',
   '12. تقرير الأعمال حسب رقم الأساس',

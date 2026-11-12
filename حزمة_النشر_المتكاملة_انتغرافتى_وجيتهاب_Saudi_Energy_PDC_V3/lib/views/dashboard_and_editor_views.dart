@@ -18,8 +18,6 @@ class ExecutiveDashboardView extends StatefulWidget {
 
 class _ExecutiveDashboardViewState extends State<ExecutiveDashboardView> {
   final TextEditingController _fastAiQueryCtrl = TextEditingController();
-  final TextEditingController _studioApiKeyCtrl = TextEditingController();
-  bool _showStudioConfigBox = false;
 
   @override
   Widget build(BuildContext context) {
@@ -163,64 +161,10 @@ class _ExecutiveDashboardViewState extends State<ExecutiveDashboardView> {
                             icon: const Icon(Icons.science, size: 16),
                             label: const Text('شيت المختبر والمنتهية (علي الجدع)'),
                           ),
-                          if (ctrl.isAuthorizedSupervisor)
-                            OutlinedButton.icon(
-                              onPressed: () => setState(
-                                () => _showStudioConfigBox = !_showStudioConfigBox,
-                              ),
-                              icon: const Icon(Icons.vpn_key, size: 16),
-                              label: const Text('إعداد Google AI Studio API (للمشرف)'),
-                            ),
                         ],
                       ),
                     ],
                   ),
-                  if (_showStudioConfigBox && ctrl.isAuthorizedSupervisor) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: FluentEnterpriseTheme.fluentBlueTint,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: FluentEnterpriseTheme.fluentBlueStroke,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _studioApiKeyCtrl,
-                              decoration: const InputDecoration(
-                                labelText:
-                                    'مفتاح Google AI Studio API (GEMINI_API_KEY) — مخصص للمشرف علي الجدع',
-                                hintText: 'AIzaSy...',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: FluentEnterpriseTheme.fluentBlue,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () {
-                              ctrl.voiceAi.googleStudioApiKey =
-                                  _studioApiKeyCtrl.text.trim();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    '🔑 تم حفظ وتفعيل مفتاح Google AI Studio API للمشرف علي الجدع!',
-                                  ),
-                                ),
-                              );
-                            },
-                            child: const Text('حفظ وتفعيل المفتاح'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 12),
                   Row(
                     children: [

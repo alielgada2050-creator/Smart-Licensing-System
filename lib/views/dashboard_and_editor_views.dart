@@ -18,8 +18,6 @@ class ExecutiveDashboardView extends StatefulWidget {
 
 class _ExecutiveDashboardViewState extends State<ExecutiveDashboardView> {
   final TextEditingController _fastAiQueryCtrl = TextEditingController();
-  final TextEditingController _studioApiKeyCtrl = TextEditingController();
-  bool _showStudioConfigBox = false;
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +37,8 @@ class _ExecutiveDashboardViewState extends State<ExecutiveDashboardView> {
         permits.where((r) => r.category == 'مغلقة (تم الإغلاق)').length;
     final subClosing =
         permits.where((r) => r.category == 'تم الرفع (بانتظار الإغلاق)').length;
-    final labNear60 = permits.where((r) {
-      final d = r.calculateSla().labDaysLeft;
-      return d >= 0 && d <= 15 && r.category != 'مغلقة (تم الإغلاق)';
+    final labNearDue = permits.where((r) {
+      return ctrl.calculatePermitSla(r).slaTier == 'near';
     }).length;
     final readyNextWeek =
         ctrl.coordinationItems.where((c) => c.isReady).length;
@@ -181,78 +178,10 @@ class _ExecutiveDashboardViewState extends State<ExecutiveDashboardView> {
                               ),
                             ),
                           ),
-                          if (ctrl.isAuthorizedSupervisor)
-                            OutlinedButton.icon(
-                              onPressed: () => setState(
-                                () => _showStudioConfigBox = !_showStudioConfigBox,
-                              ),
-                              icon: const Icon(Icons.vpn_key, size: 16),
-                              label: Text(
-                                ctrl.tr(
-                                  'إعداد Google AI Studio API (للمشرف)',
-                                  'Configure Google AI Studio API',
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ],
                   ),
-                  if (_showStudioConfigBox && ctrl.isAuthorizedSupervisor) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF0F2942)
-                            : FluentEnterpriseTheme.fluentBlueTint,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: FluentEnterpriseTheme.fluentBlueStroke,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _studioApiKeyCtrl,
-                              decoration: InputDecoration(
-                                labelText: ctrl.tr(
-                                  'مفتاح Google AI Studio API (GEMINI_API_KEY) — مخصص للمشرف علي الجدع',
-                                  'Google AI Studio API Key (GEMINI_API_KEY) — Supervisor Ali Al-Jada',
-                                ),
-                                hintText: 'AIzaSy...',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: FluentEnterpriseTheme.fluentBlue,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () {
-                              ctrl.voiceAi.googleStudioApiKey =
-                                  _studioApiKeyCtrl.text.trim();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    ctrl.tr(
-                                      '🔑 تم حفظ وتفعيل مفتاح Google AI Studio API للمشرف علي الجدع!',
-                                      '🔑 Google AI Studio API key saved and activated!',
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              ctrl.tr('حفظ وتفعيل المفتاح', 'Save & Activate Key'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -398,10 +327,10 @@ class _ExecutiveDashboardViewState extends State<ExecutiveDashboardView> {
               ),
               _KpiItem(
                 title: ctrl.tr(
-                  'حرجة مهلة المختبر 60 يوماً (≤15 يوم)',
-                  'Critical 60-Day Lab SLA (≤15d)',
+                  'مهلة تقرير المختبر القريبة من الاستحقاق',
+                  'URS Report Deadline Approaching',
                 ),
-                value: '$labNear60',
+                value: '$labNearDue',
                 subtitle: ctrl.tr(
                   'إجمالي فسوحات مختبر URS: ${ctrl.ursInspections.length}',
                   'Total URS Lab Inspections: ${ctrl.ursInspections.length}',
@@ -547,8 +476,8 @@ class _ExecutiveDashboardViewState extends State<ExecutiveDashboardView> {
                       isDark,
                     ),
                     _q18Chip(
-                      ctrl.tr('12. اقتربت من 60 يوم مختبر؟', '12. Near 60d Lab SLA?'),
-                      ctrl.tr('$labNear60 رخصة', '$labNear60 Permits'),
+                      ctrl.tr('12. مهل المختبر القريبة', '12. Approaching lab deadlines'),
+                      ctrl.tr('$labNearDue رخصة', '$labNearDue Permits'),
                       'urs',
                       isDark,
                     ),

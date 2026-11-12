@@ -4,11 +4,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../data/enterprise_db_payload.dart';
 import '../models/permit_models.dart';
+import '../repositories/enterprise_repository.dart';
 import 'egyptian_voice_ai_service.dart';
 
 class EnterpriseController extends ChangeNotifier {
+  final EnterpriseRepository _repository;
   final EgyptianVoiceAiService voiceAi = EgyptianVoiceAiService();
 
   List<PermitRecord> permits = [];
@@ -18,6 +19,11 @@ class EnterpriseController extends ChangeNotifier {
   List<OdooTaskRecord> odooTasks = [];
   List<SecQaQcRecord> secQaQcList = [];
   List<SiteEngineerActionLog> siteEngineerLogs = [];
+  String? databaseLoadError;
+  bool isLoadingData = true;
+  bool _disposed = false;
+  int? ursReportGraceDays;
+  int? nearDeadlineDays;
 
   // Navigation, Theme & Language
   String activeView = 'dashboard';
@@ -27,15 +33,12 @@ class EnterpriseController extends ChangeNotifier {
   bool isCompactFocusMode = false;
 
   // Access Gate & Visitor Mode
-  bool isVisitorMode = false;
-  String loggedInEmail = 'alielgada5@gmail.com';
-  String loggedInName = 'مشرف علي الجدع';
-  String loggedInRole = 'general_supervisor';
+  bool isVisitorMode = true;
+  String loggedInEmail = '';
+  String loggedInName = '';
+  String loggedInRole = 'viewer';
 
-  // 4-Hour Auto-Sync Timer
-  int fourHourSecondsRemaining = 4 * 3600 - 5;
-  Timer? _syncCountdownTimer;
-  String lastSyncTimestamp = '2026-11-09 08:00:00 +03:00';
+  String lastSyncTimestamp = 'غير متاح — لم يُفعّل مصدر البيانات';
 
   // Filters for Licenses Table
   String selectedLicenseCategory = 'ALL';
@@ -66,58 +69,30 @@ class EnterpriseController extends ChangeNotifier {
     'support',
   ];
 
-  EnterpriseController() {
-    _loadEmbeddedEnterpriseDatabase();
+  EnterpriseController({EnterpriseRepository? repository})
+      : _repository = repository ?? BundledEnterpriseRepository() {
+    unawaited(_loadEnterpriseDatabase());
     _initDefaultSiteEngineerLogs();
-    _initAgentWelcomeChat();
-    _startFourHourTimer();
   }
 
-  void _loadEmbeddedEnterpriseDatabase() {
+  Future<void> _loadEnterpriseDatabase() async {
     try {
-      final payload = decodeEnterpriseDbPayload();
-      final List<dynamic> keys = payload['keys'] as List<dynamic>;
-      final List<dynamic> pool = payload['pool'] as List<dynamic>;
-      final List<dynamic> rawPermits = payload['permits'] as List<dynamic>;
-
-      permits = rawPermits.map((row) {
-        final arr = row as List<dynamic>;
-        final Map<String, dynamic> map = {};
-        for (int i = 0; i < keys.length && i < arr.length; i++) {
-          final k = keys[i].toString();
-          final v = arr[i];
-          map[k] = (v is int && v >= 0 && v < pool.length) ? pool[v] : v;
-        }
-        return PermitRecord.fromMap(map);
-      }).toList();
-
-      final rawCoord = (payload['coordination'] as List<dynamic>? ?? []);
-      coordinationItems = rawCoord
-          .map((e) => CoordinationItem.fromMap(Map<String, dynamic>.from(e as Map)))
-          .toList();
-
-      final rawUrs = (payload['urs_inspections'] as List<dynamic>? ?? []);
-      ursInspections = rawUrs
-          .map((e) => UrsInspectionRecord.fromMap(Map<String, dynamic>.from(e as Map)))
-          .toList();
-
-      final rawPdf = (payload['pdf_licenses'] as List<dynamic>? ?? []);
-      pdfLicenses = rawPdf
-          .map((e) => PdfOcrLicenseRecord.fromMap(Map<String, dynamic>.from(e as Map)))
-          .toList();
-
-      final rawOdoo = (payload['odoo_tasks'] as List<dynamic>? ?? []);
-      odooTasks = rawOdoo
-          .map((e) => OdooTaskRecord.fromMap(Map<String, dynamic>.from(e as Map)))
-          .toList();
-
-      final rawSec = (payload['sec_qaqc'] as List<dynamic>? ?? []);
-      secQaQcList = rawSec
-          .map((e) => SecQaQcRecord.fromMap(Map<String, dynamic>.from(e as Map)))
-          .toList();
-    } catch (e) {
-      debugPrint('Error decoding enterprise DB payload: $e');
+      final snapshot = await _repository.loadSnapshot();
+      permits = snapshot.permits;
+      coordinationItems = snapshot.coordinationItems;
+      ursInspections = snapshot.ursInspections;
+      pdfLicenses = snapshot.pdfLicenses;
+      odooTasks = snapshot.odooTasks;
+      secQaQcList = snapshot.secQaQcList;
+      _initAgentWelcomeChat();
+    } catch (error, stackTrace) {
+      databaseLoadError = error.toString();
+      debugPrint('Enterprise repository load failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    } finally {
+      isLoadingData = false;
     }
+    if (!_disposed) notifyListeners();
   }
 
   void _initDefaultSiteEngineerLogs() {
@@ -170,31 +145,10 @@ class EnterpriseController extends ChangeNotifier {
     );
   }
 
-  void _startFourHourTimer() {
-    _syncCountdownTimer?.cancel();
-    _syncCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (fourHourSecondsRemaining > 0) {
-        fourHourSecondsRemaining--;
-      } else {
-        fourHourSecondsRemaining = 4 * 3600;
-        runFourHourAutoSync(silent: true);
-      }
-      notifyListeners();
-    });
-  }
-
-  String get formattedFourHourCountdown {
-    final h = (fourHourSecondsRemaining ~/ 3600).toString().padLeft(2, '0');
-    final m = ((fourHourSecondsRemaining % 3600) ~/ 60).toString().padLeft(2, '0');
-    final s = (fourHourSecondsRemaining % 60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
-  }
+  String get formattedFourHourCountdown => 'غير مهيأ';
 
   bool get isAuthorizedSupervisor =>
-      !isVisitorMode &&
-      (loggedInEmail.toLowerCase() == 'alielgada5@gmail.com' ||
-          loggedInName.contains('الجدع') ||
-          loggedInName.contains('مشرف'));
+      !isVisitorMode && loggedInRole == 'super_admin';
 
   bool canSwitchToView(String viewKey) {
     if (!isVisitorMode) return true;
@@ -255,43 +209,41 @@ class EnterpriseController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reloadData() {
+    if (isLoadingData) return;
+    databaseLoadError = null;
+    isLoadingData = true;
+    notifyListeners();
+    unawaited(_loadEnterpriseDatabase());
+  }
+
+  PermitSlaInfo calculatePermitSla(PermitRecord permit) {
+    return permit.calculateSla(
+      ursGraceDays: ursReportGraceDays,
+      nearDeadlineDays: nearDeadlineDays,
+    );
+  }
+
+  void applyDeadlineSettings(Map<String, Object?> settings) {
+    int? readIntegerSetting(String key) {
+      final value = settings[key];
+      if (value == null) return null;
+      if (value is int && value >= 0) return value;
+      throw FormatException('Invalid non-negative integer setting: $key');
+    }
+
+    ursReportGraceDays = readIntegerSetting('urs_report_grace_days');
+    nearDeadlineDays = readIntegerSetting('near_deadline_days');
+    notifyListeners();
+  }
+
   void activateVisitorMode() {
     isVisitorMode = true;
+    loggedInEmail = '';
+    loggedInName = '';
+    loggedInRole = 'viewer';
     selectedLicenseCategory = 'سارية / مفعلة (رخص PDF المعتمدة)';
     activeView = 'dashboard';
-    notifyListeners();
-  }
-
-  bool authenticateSupervisorOrEngineer({
-    required String email,
-    required String name,
-    required String otpCode,
-  }) {
-    loggedInEmail = email.trim();
-    loggedInName = name.trim();
-    isVisitorMode = false;
-    selectedLicenseCategory = 'ALL';
-    if (loggedInEmail.toLowerCase() == 'alielgada5@gmail.com' ||
-        otpCode.trim() == '849206' ||
-        otpCode.trim() == 'ALI-JADA-APPROVED') {
-      loggedInRole = 'general_supervisor';
-    } else {
-      loggedInRole = 'site_engineer';
-    }
-    notifyListeners();
-    return true;
-  }
-
-  void runFourHourAutoSync({bool silent = false}) {
-    fourHourSecondsRemaining = 4 * 3600;
-    final now = DateTime.now();
-    lastSyncTimestamp =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
-    if (!silent) {
-      voiceAi.speakEgyptianMale(
-        'تم تشغيل دورة التحديث الآلي كل أربع ساعات من جوجل درايف وأودو بنجاح يا باشمهندس، وفحص ${permits.length} رخصة و ${coordinationItems.length} معاملة.',
-      );
-    }
     notifyListeners();
   }
 
@@ -313,7 +265,7 @@ class EnterpriseController extends ChangeNotifier {
         if (selectedBanFilter == 'غير محظور' && r.isRoadBanned) return false;
       }
       if (selectedSlaFilter.isNotEmpty) {
-        final sla = r.calculateSla();
+        final sla = calculatePermitSla(r);
         if (sla.slaTier != selectedSlaFilter) return false;
       }
       if (q.isNotEmpty) {
@@ -515,7 +467,7 @@ class EnterpriseController extends ChangeNotifier {
           district: district,
           notes: reasonNotes,
           digLengthLabel: lengthLabel,
-          lengthM: double.tryParse(lengthLabel.replaceAll('m', '')) ?? 100,
+          lengthM: double.tryParse(lengthLabel.replaceAll('m', '')),
           expectedStart: expectedStart,
           fieldMonitor: engineerName,
           assignedSupervisor: supervisor,
@@ -660,33 +612,31 @@ class EnterpriseController extends ChangeNotifier {
 
     if (exactMatches.isNotEmpty) {
       final r = exactMatches.first;
-      final sla = r.calculateSla();
+      final sla = calculatePermitSla(r);
       replyTitle = '1. نتيجة البحث الفوري (سجل الرخصة ${r.permitId} / الأساس ${r.baseNo})';
       replyBody =
           '• رقم الرخصة: ${r.permitId} | رقم الأساس: ${r.baseNo} | المحطة: ${r.stationNo} | السكيم: ${r.schemeNo}\n'
           '• الحالة والتصنيف: ${r.category} (${r.fieldStatus})\n'
           '• الاستشاري: ${r.consultant} | المختبر: ${r.lab}\n'
-          '• الصلاحية ومهلة المختبر: تنتهي الرخصة في ${sla.endStr} | آخر موعد للمختبر (60 يوم): ${sla.labDeadlineStr} (${sla.slaLabel})\n'
+          '• الصلاحية ومهلة المختبر: تنتهي الرخصة في ${sla.endStr} | آخر موعد للتقرير: ${sla.labDeadlineStr} (${sla.slaLabel})\n'
           '• الموقع والمسار: ${r.district} — ${r.notes}\n'
           '2. مصدر البيانات: ${r.sourceFile} (Google Drive موثق)\n'
           '3. آخر تحديث: $lastSyncTimestamp | 4. عدد السجلات: ${exactMatches.length} سجل.';
     } else if (q.contains('4 ساعات') || q.contains('درايف')) {
-      replyTitle = 'تقرير الوكيل 15 (تحديث شيتات الدرايف وصور الرخص كل 4 ساعات)';
+      replyTitle = 'حالة تكامل Drive';
       replyBody =
-          '1. حالة المزامنة الدورية: نشطة وتعمل أوتوماتيكياً كل 4 ساعات (المتبقي للدورة القادمة: $formattedFourHourCountdown).\n'
-          '2. السجلات المفحوصة: ${permits.length} رخصة + ${coordinationItems.length} معاملة أسبوعية + ${pdfLicenses.length} رخصة PDF.\n'
-          '3. التسهيلات الميدانية: جميع الرخص السارية مربوطة بزر (تنزيل الرخصة من الدرايف) وإرفاق الصور الفوري لمهندسي ومراقبي الموقع.\n'
-          '4. إشراف المنظومة: المشرف علي الجدع (0597778853).';
+          'التكامل غير مهيأ؛ لا توجد مزامنة تلقائية أو رفع ملفات فعلي. '
+          'يلزم إعداد المصادقة وDrive API قبل تفعيل الوظائف.';
     } else if (q.contains('راسب') || q.contains('مختبر')) {
       final failedUrs = ursInspections.where((u) => u.failedPoints > 0).toList();
-      final crit15 = permits.where((r) {
-        final d = r.calculateSla().labDaysLeft;
-        return d >= 0 && d <= 15 && r.category != 'مغلقة (تم الإغلاق)';
+      final nearDuePermits = permits.where((r) {
+        final sla = calculatePermitSla(r);
+        return sla.slaTier == 'near';
       }).toList();
-      replyTitle = 'تقرير الوكيل 4 (مختبر URS ومهلة الـ 60 يوماً)';
+      replyTitle = 'تقرير الوكيل 4 (مختبر URS والمهل)';
       replyBody =
-          '1. الفسوحات التي بها نقاط راسبة في مختبر URS: ${failedUrs.length} فسحاً بإجمالي 62 نقطة راسبة.\n'
-          '2. الرخص المتبقي لها ≤15 يوماً على مهلة المختبر (60 يوماً): ${crit15.length} رخصة.\n'
+          '1. الفسوحات التي بها نقاط راسبة في مختبر URS: ${failedUrs.length} فسحاً.\n'
+          '2. الرخص ذات المهل القريبة من الاستحقاق وفق الإعدادات: ${nearDuePermits.length} رخصة.\n'
           '3. مصدر البيانات: سلة تقرير المختبر.xlsx + التقرير الوارد من المختبر (بإشراف المشرف علي الجدع).\n'
           '4. ضوابط النظام: لا تُغلق الرخصة حتى إعادة الدمك وإرفاق تقرير الفحص الناجح.';
     } else if (q.contains('الأسبوع') || q.contains('الجاهزة')) {
@@ -836,7 +786,7 @@ class EnterpriseController extends ChangeNotifier {
 
   @override
   void dispose() {
-    _syncCountdownTimer?.cancel();
+    _disposed = true;
     super.dispose();
   }
 }

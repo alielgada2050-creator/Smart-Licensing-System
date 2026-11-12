@@ -1,17 +1,12 @@
-// Egyptian Male Voice AI Engine + Fast Local (<15ms) & Google AI Studio API Service
+// Local deterministic search and optional text-to-speech presentation.
 
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:http/http.dart' as http;
 import '../models/permit_models.dart';
 
 class EgyptianVoiceAiService {
   final FlutterTts _tts = FlutterTts();
   bool _initialized = false;
-
-  String googleStudioApiKey = '';
-  String selectedModel = 'gemini-3.8-flash';
 
   Future<void> initTts() async {
     if (_initialized) return;
@@ -52,7 +47,7 @@ class EgyptianVoiceAiService {
     return;
   }
 
-  /// Runs ultra-fast (<15ms) local search & comparison + optional live Gemini Studio API call
+  /// Performs a deterministic local search; no permit data or API keys leave the client.
   Future<EgyptianSearchResponse> runFastSearchAndComparison({
     required String query,
     required List<PermitRecord> allPermits,
@@ -108,47 +103,10 @@ class EgyptianVoiceAiService {
     sw.stop();
     final elapsedMs = sw.elapsedMilliseconds < 12 ? 12 : sw.elapsedMilliseconds;
 
-    String egReply =
-        'تمام يا باشمهندس، بحثتلك في قاعدة البيانات في $elapsedMs مللي ثانية باستخدام محرك جوجل ستوديو ($selectedModel). '
-        'لقيت ${matched.length} سجل مطابق. وبخصوص المقارنة السريعة: عندنا $activeCnt رخصة شغالة وتحت التنفيذ، '
-        'مقابل $ripcCnt معاد من المركز و $consCnt معاد من الاستشاري، و $expCnt منتهية تحت المعالجة، '
-        'و $closedCnt رخصة اتقفلت نهائي. تقدر تدوس على زرار تنزيل الشيت عشان يتحمل معاك فوراً.';
-
-    // Optional live augmentation if supervisor configured a real Gemini API key
-    if (googleStudioApiKey.isNotEmpty &&
-        googleStudioApiKey.startsWith('AIza') &&
-        query.trim().isNotEmpty) {
-      try {
-        final uri = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/$selectedModel:generateContent?key=$googleStudioApiKey',
-        );
-        final res = await http
-            .post(
-              uri,
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({
-                'contents': [
-                  {
-                    'parts': [
-                      {
-                        'text':
-                            'أنت مساعد هندسي مصري ذكي في منظومة الرخص الذكية للشركة السعودية للطاقة و PDC بإشراف المشرف علي الجدع. أجب باللهجة المصرية باختصار شديد عن: $query. علماً أن عدد السجلات المطابقة ${matched.length} من إجمالي ${allPermits.length} رخصة.',
-                      }
-                    ]
-                  }
-                ]
-              }),
-            )
-            .timeout(const Duration(seconds: 4));
-        if (res.statusCode == 200) {
-          final body = jsonDecode(res.body);
-          final text = body['candidates']?[0]?['content']?['parts']?[0]?['text'];
-          if (text != null && text.toString().trim().isNotEmpty) {
-            egReply = text.toString().trim();
-          }
-        }
-      } catch (_) {}
-    }
+    final egReply =
+        'تم البحث محلياً في $elapsedMs مللي ثانية. وُجد ${matched.length} سجل مطابق. '
+        'السارية وتحت التنفيذ: $activeCnt، المعادة من المركز: $ripcCnt، '
+        'المعادة من الاستشاري: $consCnt، المنتهية: $expCnt، والمغلقة: $closedCnt.';
 
     await speakEgyptianMale(egReply);
 
